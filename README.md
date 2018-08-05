@@ -124,6 +124,56 @@ This string can be used in the `Authorization` Header
 
 The Version 1 HMAC header requires an additional `X-Date` header. The `X-Date` header can be retrieved by calling `authorization.getDateString()`
 
+## Verification
+
+This library can also validate the client generated HMAC. A high level example (psuedocode) is provided below:
+
+```php
+use DateTime;
+use ncryptf\Authorization;
+use ncryptf\Token as NcryptfToken;
+
+public function authenticate($user, $request, $response)
+{
+    // Extract the parameters from the header string
+    $params = Authorization::extractParamsFromHeaderString($request->getHeaders()->get('Authorization'));
+
+    if ($params) {
+        // Your API should implement a method to fetch all token data from the access token
+        // Typically this is stored in a cache of some kind, such as Redis
+        if ($token = $this->getTokenFromAccessToken($params['access_token'])) {
+            try {
+                // Determine the appropriate date to use, depending upon the version
+                $date = new DateTime($params['date'] ?? $request->getHeaders()->get('X-Date'));
+
+                // Construct a new server side Authorization object
+                $auth = new Authorization(
+                    $request->getHttpMethod(), // GET, POST, PUT... etc
+                    $request->getUrl(), // The URI with query parameters
+                    $token->getNcryptfToken(), // Your token object should support data extraction to an ncryptf/Token type
+                    $date,
+                    $request->getRawBody(), // The raw JSON in the request. If you're using encrypted requests, this should be decrypted
+                    $params['v'], // The version of the HMAC header to validate
+                    \base64_decode($params['salt']) // The salt value from the parameters
+                );
+
+                // Verify the HMAC submitted against the newly generated auth object
+                if ($auth->verify(\base64_decode($params['hmac']), $auth)) {
+                    
+                    // Do your login here
+                    //
+                    //
+                }
+            } catch (\Exception $e) {
+                // Handle exceptions here
+            }
+        }
+    }
+
+   // Handle authentication failures
+}
+```
+
 ## Encrypted Requests & Responses
 
 This library enables clients coding in PHP 7.1+ to establish and trusted encrypted session on top of a TLS layer, while simultaniously (and independently) providing the ability authenticate and identify a client via HMAC+HKDF style authentication.
