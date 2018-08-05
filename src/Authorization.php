@@ -69,6 +69,7 @@ class Authorization
      * @param DateTime $date        The date
      * @param array|string $payload Array representation of the payload
      * @param integer $version      The authorization version, by default this is 2
+     * @param string $salt          An optional fixed salt value
      */
     public function __construct(string $httpMethod, string $uri, Token $token, DateTime $date, $payload = '', int $version = 2, string $salt = null)
     {
