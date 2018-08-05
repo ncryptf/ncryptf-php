@@ -1,0 +1,30 @@
+{
+    "name": "charlesportwoodii/ncryptf",
+    "description": "ncryptf for PHP",
+    "type": "library",
+    "license": "BSD 3-Clause",
+    "authors": [
+        {
+            "name": "Charles R. Portwood II",
+            "email": "charlesportwoodii@erianna.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ncryptf\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ncryptf\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^7.1 || ^7.2",
+        "ext-sodium": ">=2.0.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7",
+        "squizlabs/php_codesniffer": "^3.2"
+    }
+}
