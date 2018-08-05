@@ -1,6 +1,6 @@
 # ncryptf PHP
 
-[![Packagist Pre Release](https://img.shields.io/packagist/vpre/charlesportwoodii/ncryptf.svg?maxAge=86400?style=flat-square)](https://packagist.org/packages/charlesportwoodii/ncryptf-php)
+[![Packagist Pre Release](https://img.shields.io/packagist/vpre/charlesportwoodii/ncryptf.svg?maxAge=86400?style=flat-square)](https://packagist.org/packages/charlesportwoodii/ncryptf)
 [![TravisCI](https://img.shields.io/travis/charlesportwoodii/ncryptf-php.svg?style=flat-square "TravisCI")](https://travis-ci.org/charlesportwoodii/ncryptf-php)
 [![Scrutinizer Code Quality](https://img.shields.io/scrutinizer/g/charlesportwoodii/ncryptf-php.svg?style=flat-square)](https://scrutinizer-ci.com/g/charlesportwoodii/ncryptf-php/)
 [![License](https://img.shields.io/badge/license-BSD-orange.svg?style=flat-square "License")](https://github.com/charlesportwoodii/ncryptf-php/blob/master/LICENSE.md)
