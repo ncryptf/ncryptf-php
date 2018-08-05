@@ -21,7 +21,7 @@ final class Signature
         string $uri,
         string $salt,
         DateTime $date,
-        $payload = [],
+        $payload = '',
         int $version = 2
     ) {
         $httpMethod = \strtoupper($httpMethod);
@@ -39,7 +39,7 @@ final class Signature
      * @param array|string $payload
      * @return string
      */
-    private static function serializePayload($payload = [])
+    private static function serializePayload($payload = '')
     {
         // If the payload is already JSON, return it
         if (\is_string($payload)) {

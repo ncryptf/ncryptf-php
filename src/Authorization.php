@@ -70,10 +70,14 @@ class Authorization
      * @param array|string $payload Array representation of the payload
      * @param integer $version      The authorization version, by default this is 2
      */
-    public function __construct(string $httpMethod, string $uri, Token $token, DateTime $date, $payload = [], int $version = 2)
+    public function __construct(string $httpMethod, string $uri, Token $token, DateTime $date, $payload = '', int $version = 2, string $salt = null)
     {
         $httpMethod = \strtoupper($httpMethod);
-        $this->salt = \random_bytes(32);
+        if ($salt === null) {
+            $this->salt = \random_bytes(32);
+        } else {
+            $this->salt = $salt;
+        }
         $this->signature = Signature::derive($httpMethod, $uri, $this->salt, $date, $payload, $version);
 
         $hkdf = hash_hkdf(static::HMAC_ALGO, $token->ikm, 0, static::AUTH_INFO, $this->salt);
