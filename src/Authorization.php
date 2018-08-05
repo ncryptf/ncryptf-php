@@ -190,12 +190,12 @@ class Authorization
      * @param string $hmac
      * @param self $auth
      * @param integer $driftAllowance
-     * @return void
+     * @return boolean
      */
     public function verify(string $hmac, self $auth, int $driftAllowance = 90)
     {
         $drift = $this->getTimeDrift($auth->getDate());
-        if ($drift >= $driftAllowance) {
+        if ($drift && $drift >= $driftAllowance) {
             return false;
         }
 
@@ -210,7 +210,7 @@ class Authorization
      * Calculates the time difference between now and the provided date
      *
      * @param string $date
-     * @return int
+     * @return int|boolean
      */
     private function getTimeDrift(string $date)
     {
