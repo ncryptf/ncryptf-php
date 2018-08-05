@@ -106,7 +106,7 @@ $header = $auth->getHeader();
 
 ### Version 1 HMAC Header
 
-For API's using version 1 of the HMAC header, call `new Authorization` with the optional `version` parameter set to `1` for the6th parameter.
+For API's using version 1 of the HMAC header, call `new Authorization` with the optional `version` parameter set to `1` for the 6th parameter.
 
 ```php
 $auth = new Authorization(
@@ -114,8 +114,11 @@ $auth = new Authorization(
     $uri,
     $token,
     new DateTime,
-    $payload
+    $payload,
+    1
 );
+
+$auth->getHeader(),
 ```
 
 This string can be used in the `Authorization` Header
