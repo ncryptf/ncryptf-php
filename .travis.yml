@@ -1,0 +1,27 @@
+---
+sudo: false
+
+# Test on PHP7
+language: php
+php:
+  - '7.1'
+  - '7.2'
+  - nightly
+
+matrix:
+  allow_failures:
+    - php: nightly
+  fast_finish: true
+
+services:
+  - redis-server
+
+# before_script:
+before_install:
+  - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+
+install:
+  - composer install -ovn
+
+script:
+- ./vendor/bin/phpunit
