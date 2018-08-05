@@ -1,5 +1,6 @@
 ---
-sudo: false
+sudo: required
+dist: trusty
 
 # Test on PHP7
 language: php
@@ -13,15 +14,21 @@ matrix:
     - php: nightly
   fast_finish: true
 
-services:
-  - redis-server
+# Cache composer dependencies
+cache:
+  directories:
+    - vendor
 
-# before_script:
 before_install:
-  - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  # Install dependencies
+  - chmod a+x tests/.travis/install_dependencies.sh
+  - bash tests/.travis/install_dependencies.sh
+  - pecl install libsodium-2.0.10
+  - phpenv config-rm xdebug.ini || true
+  - php -m
 
 install:
   - composer install -ovn
 
 script:
-- ./vendor/bin/phpunit
+  - ./vendor/bin/phpunit
