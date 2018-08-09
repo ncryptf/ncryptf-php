@@ -193,8 +193,70 @@ The primary reason you may want to establish an encrypted session with the API i
 
 Payloads can be encrypted as follows:
 
+```php
+use ncryptf\Request;
 
-> Note that you need to have a pre-bootstrapped security key to encrypt data. For the v1 API, this is typically this is returned by `/api/v1/server/otk`
+// Generate your request keypair for your local device.
+$privateKeypair = sodium_crypto_box_keypair();
+
+// Create a new request object with your private key
+// and the servers private key
+$request = new Request(
+    \sodium_crypto_box_secretkey($privateKeypair),
+    $publicKey
+);
+
+// Encrypt JSON
+$encryptedRequest = $request->encrypt(
+    '{ "foo": "bar" }'
+);
+```
+
+> Note that you need to have a pre-bootstrapped public key to encrypt data. For the v1 API, this is typically this is returned by `/api/v1/server/otk`.
 
 ### Decrypting Responses
+
+Responses from the server can be decrypted as follows:
+
+```php
+use ncryptf\Response;
+
+// Represents the httpResponse
+$httpResponse ...;
+
+// Reuse the keypair uses on the request
+$privateKeypair = sodium_crypto_box_keypair();
+
+// Create a new request object with your private key
+// and the servers private key
+$response = new Response(
+    \sodium_crypto_box_secretkey($privateKeypair),
+    $publicKey
+);
+
+// Extract the raw body from the response
+$rawBody = \base64_decode($httpResponse->getBody());
+$nonce = \base64_decode($httpResponse->headers->get('x-nonce');
+$jsonResponse = $response->decrypt(
+    $rawBody,
+    $nonce
+);
+
+if ($jsonResponse === false) {
+    // Decryption failure
+}
+
+// For additional security, verify the detacted signature
+$signature = \base64_decode($httpResponse->headers->get('x-signature'));
+$signaturePublicKey = \base64_decode($httpResponse->headers->get('x-sigpubkey'));
+
+if (!$response->isSignatureValid(
+    $jsonResponse, // The JSON data is signed before encrypting
+    $signature,
+    $signaturePublicKey
+)) {
+    // Signature isn't valid, the request has been tampered with and should not be trusted
+}
+
+```
 
