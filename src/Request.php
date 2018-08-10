@@ -48,14 +48,12 @@ class Request
      */
     public function encrypt(string $request, string $nonce = null)
     {
-        if ($nonce === null) {
-            $nonce = \random_bytes(SODIUM_CRYPTO_BOX_NONCEBYTES);
-        }
+        $this->nonce = $nonce ?? \random_bytes(SODIUM_CRYPTO_BOX_NONCEBYTES);
 
         try {
             return \sodium_crypto_box(
                 $request,
-                $nonce,
+                $this->nonce,
                 $this->keypair
             );
         } catch (SodiumException $e) {
@@ -80,5 +78,15 @@ class Request
         } catch (SodiumException $e) {
             throw new InvalidArgumentException($e->getMessage());
         }
+    }
+
+    /**
+     * Returns the nonce used
+     *
+     * @return string
+     */
+    public function getNonce()
+    {
+        return $this->nonce;
     }
 }
