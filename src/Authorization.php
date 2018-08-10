@@ -95,7 +95,7 @@ class Authorization
     {
         if ($hmacHeader !== null && preg_match('/^HMAC\s+(.*?)$/', $hmacHeader, $matches)) {
             if (\strpos($matches[1], ',') !== false) {
-                $params = explode(',', trim($matches[1][1]));
+                $params = explode(',', trim($matches[1]));
 
                 if (count($params) !== 3) {
                     return false;
