@@ -16,7 +16,7 @@ class Response
 
     /**
      * Constructor
-     * 
+     *
      * @param string $secretKey The 32 byte secret key
      * @param string $publicKey The 32 byte public key
      */
@@ -35,7 +35,7 @@ class Response
     /**
      * Decrypts a given response with a nonce
      * This will return the decrypted string of decrypt was successful, and false otherwise
-     * 
+     *
      * @param string $response  The encrypted HTTP response, as a multi-byte string
      * @param string $nonce     The 32 byte nonce
      * @return string|bool
@@ -55,7 +55,7 @@ class Response
 
     /**
      * Returns true if the signature validates the response
-     * 
+     *
      * @param string $response  The raw http response, after decoding
      * @param string $signature The raw multi-byte signature
      * @param string $publicKey The signing public key

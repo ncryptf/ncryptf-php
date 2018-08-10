@@ -16,14 +16,14 @@ class Request
 
     /**
      * 24 byte nonce
-     * 
+     *
      * @var string
      */
     private $nonce;
 
     /**
      * Constructor
-     * 
+     *
      * @param string $secretKey The 32 byte secret key
      * @param string $publicKey The 32 byte public key
      */
@@ -41,7 +41,7 @@ class Request
 
     /**
      * Encrypts a request
-     * 
+     *
      * @param string $request   The raw HTTP request as a string
      * @param string $nonce     Optional nonce. If not provided, a 24 byte nonce will be generated
      * @return string
@@ -63,7 +63,7 @@ class Request
 
     /**
      * Creates a detached signature for the keypair
-     * 
+     *
      * @param string $request
      * @param string $secretKey
      * @return string
