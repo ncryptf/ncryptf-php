@@ -49,7 +49,7 @@ class Response
                 $this->keypair
             );
         } catch (SodiumException $e) {
-            throw new InvalidArguementException($e->getMessage());
+            throw new InvalidArgumentException($e->getMessage());
         }
     }
 
@@ -70,7 +70,7 @@ class Response
                 $publicKey
             );
         } catch (SodiumException $e) {
-            throw new InvalidArguementException($e->getMessage());
+            throw new InvalidArgumentException($e->getMessage());
         }
     }
 }
