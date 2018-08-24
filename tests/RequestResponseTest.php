@@ -32,6 +32,7 @@ class RequestResponseTest extends TestCase
     "foo": "bar",
     "test": {
         "true": false,
+        "zero": 0.0,
         "a": 1,
         "b": 3.14,
         "nil": null,
