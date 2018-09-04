@@ -25,6 +25,9 @@ class RequestResponseTest extends TestCase
     
     private $nonce = 'bulRnKt/BvwnwiCMBLvdRM5+yNFP38Ut';
 
+    private $expectedCipher = '1odrjBif71zRcZidfhEzSb80rXGJGB1J3upTb+TwhpxmFjXOXjwSDw45e7p/+FW4Y0/FDuLjHfGghOG0UC7j4xmX8qIVYUdbKCB/dLn34HQ0D0NIM6N9Qj83bpS5XgK1o+luonc0WxqA3tdXTcgkd2D+cSSSotJ/s+5fqN3w5xsKc7rKb1p3MpvRzyEmdNgJCFOk8EErn0bolz9LKyPEO0A2Mnkzr19bDwsgD1DGEYlo0i9KOw06RpaZRz2J+OJ+EveIlQGDdLT8Gh+nv65TOKJqCswOly0=';
+    private $expectedSignature = 'dcvJclMxEx7pcW/jeVm0mFHGxVksY6h0/vNkZTfVf+wftofnP+yDFdrNs5TtZ+FQ0KEOm6mm9XUMXavLaU9yDg==';
+
     public function testEncryptDecrypt()
     {
         $payload = <<<JSON
@@ -51,6 +54,9 @@ JSON;
         $cipher = $request->encrypt($payload, \base64_decode($this->nonce));
 
         $signature = $request->sign($payload, \base64_decode($this->signatureKeyPair['secret']));
+        
+        $this->assertEquals($this->expectedCipher, \base64_encode($cipher));
+        $this->assertEquals($this->expectedSignature, \base64_encode($signature));
 
         $response = new Response(
             \base64_decode($this->serverKeyPair['secret']),
