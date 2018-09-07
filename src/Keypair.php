@@ -9,14 +9,14 @@ final class Keypair
      *
      * @var string
      */
-    private $secret;
+    private $secretKey;
 
     /**
      * Public Key
      *
      * @var string
      */
-    private $public;
+    private $publicKey;
 
     /**
      * Constructor
@@ -24,10 +24,10 @@ final class Keypair
      * @param string $secret
      * @param string $public
      */
-    public function __construct(string $secret, string $public)
+    public function __construct(string $secretKey, string $publicKey)
     {
-        $this->secret = $secret;
-        $this->public = $public;
+        $this->secretKey = $secretKey;
+        $this->publicKey = $publicKey;
     }
 
     /**
@@ -37,7 +37,7 @@ final class Keypair
      */
     public function getPublicKey() :? string
     {
-        return $this->public;
+        return $this->publicKey;
     }
 
     /**
@@ -47,6 +47,6 @@ final class Keypair
      */
     public function getSecretKey() :? string
     {
-        return $this->secret;
+        return $this->secretKey;
     }
 }
