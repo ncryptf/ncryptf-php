@@ -28,8 +28,8 @@ final class Utils
         try {
             $keypair = \sodium_crypto_box_keypair();
             return new Keypair(
-                \sodium_crypto_box_publickey($keypair),
-                \sodium_crypto_box_secretkey($keypair)
+                \sodium_crypto_box_secretkey($keypair),
+                \sodium_crypto_box_publickey($keypair)
             );
         } catch (SodiumException $e) {
             throw new Exception($e->getMessage());
@@ -46,8 +46,8 @@ final class Utils
         try {
             $keypair = \sodium_crypto_sign_keypair();
             return new Keypair(
-                \sodium_crypto_sign_publickey($keypair),
-                \sodium_crypto_sign_secretkey($keypair)
+                \sodium_crypto_sign_secretkey($keypair),
+                \sodium_crypto_sign_publickey($keypair)
             );
         } catch (SodiumException $e) {
             throw new Exception($e->getMessage());

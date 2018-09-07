@@ -20,8 +20,8 @@ class UtilsTest extends TestCase
     {
         $keypair = Utils::generateSigningKeypair();
         $this->assertEquals(\get_class($keypair), 'ncryptf\Keypair');
-        $this->assertEquals(64, \strlen($keypair->getPublicKey()));
-        $this->assertEquals(32, \strlen($keypair->getSecretKey()));
+        $this->assertEquals(32, \strlen($keypair->getPublicKey()));
+        $this->assertEquals(64, \strlen($keypair->getSecretKey()));
     }
 
     public function testZero()
