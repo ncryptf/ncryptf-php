@@ -197,12 +197,12 @@ Payloads can be encrypted as follows:
 use ncryptf\Request;
 
 // Generate your request keypair for your local device.
-$privateKeypair = sodium_crypto_box_keypair();
+$privateKeypair = Request::generateKeypair();
 
 // Create a new request object with your private key
 // and the servers private key
 $request = new Request(
-    \sodium_crypto_box_secretkey($privateKeypair),
+    \sodium_crypto_box_secretkey($privateKeypair['secret']),
     $publicKey
 );
 
@@ -225,12 +225,12 @@ use ncryptf\Response;
 $httpResponse ...;
 
 // Reuse the keypair uses on the request
-$privateKeypair = sodium_crypto_box_keypair();
+$privateKeypair = Request::generateKeypair();
 
 // Create a new request object with your private key
 // and the servers private key
 $response = new Response(
-    \sodium_crypto_box_secretkey($privateKeypair),
+    \sodium_crypto_box_secretkey($privateKeypair['secret']),
     $publicKey
 );
 
@@ -257,6 +257,4 @@ if (!$response->isSignatureValid(
 )) {
     // Signature isn't valid, the request has been tampered with and should not be trusted
 }
-
 ```
-
