@@ -2,6 +2,7 @@
 
 namespace ncryptf;
 
+use ncryptf\Keypair;
 use SodiumException;
 
 final class Utils
@@ -10,11 +11,11 @@ final class Utils
      * Securely erases a memory block
      *
      * @param string $data
-     * @return void
+     * @return boolean
      */
     public static function zero(string $data)
     {
-        return \sodium_memzero($data);
+        return \sodium_memzero($data) === null;
     }
 
     /**
@@ -26,10 +27,10 @@ final class Utils
     {
         try {
             $keypair = \sodium_crypto_box_keypair();
-            return [
-                'public' => \sodium_crypto_box_secretkey($keypair),
-                'secret' => \sodium_crypto_box_publickey($keypair)
-            ];
+            return new Keypair(
+                \sodium_crypto_box_publickey($keypair),
+                \sodium_crypto_box_secretkey($keypair)
+            );
         } catch (SodiumException $e) {
             throw new Exception($e->getMessage());
         }
@@ -44,10 +45,10 @@ final class Utils
     {
         try {
             $keypair = \sodium_crypto_sign_keypair();
-            return [
-                'public' => \sodium_crypto_sign_secretkey($keypair),
-                'secret' => \sodium_crypto_sign_publickey($keypair)
-            ];
+            return new Keypair(
+                \sodium_crypto_sign_publickey($keypair),
+                \sodium_crypto_sign_secretkey($keypair)
+            );
         } catch (SodiumException $e) {
             throw new Exception($e->getMessage());
         }
