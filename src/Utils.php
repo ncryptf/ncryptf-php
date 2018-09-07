@@ -13,7 +13,7 @@ final class Utils
      * @param string $data
      * @return boolean
      */
-    public static function zero(string $data)
+    public static function zero(string &$data)
     {
         return \sodium_memzero($data) === null;
     }

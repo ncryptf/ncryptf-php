@@ -29,5 +29,6 @@ class UtilsTest extends TestCase
         $data = \random_bytes(32);
         $zero = Utils::zero($data);
         $this->assertEquals($zero, true);
+        $this->assertEquals($data, NULL);
     }
 }
