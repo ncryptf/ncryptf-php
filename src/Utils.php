@@ -21,7 +21,7 @@ final class Utils
     /**
      * Generates a crypto keypair
      *
-     * @return ncryptf\Keypair
+     * @return \ncryptf\Keypair
      */
     public static function generateKeypair()
     {
@@ -39,7 +39,7 @@ final class Utils
     /**
      * Generates a signing keypair
      *
-     * @return ncryptf\Keypair
+     * @return \ncryptf\Keypair
      */
     public static function generateSigningKeypair()
     {
