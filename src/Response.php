@@ -2,8 +2,10 @@
 
 namespace ncryptf;
 
+use ncryptf\exceptions\DecryptionFailedException;
 use ncryptf\exceptions\InvalidChecksumException;
 use ncryptf\exceptions\InvalidSignatureException;
+use Exception;
 use InvalidArgumentException;
 use SodiumException;
 
@@ -17,20 +19,30 @@ class Response
     private $keypair;
 
     /**
+     * Secret key
+     * 
+     * @var string
+     */
+    private $secretKey;
+
+    /**
      * Constructor
      *
      * @param string $secretKey The 32 byte secret key
-     * @param string $publicKey The 32 byte public key
+     * @param string $publicKey The 32 byte public key (required for v1, optional for v2)
      * 
      * @throws InvalidArguementException
      */
-    public function __construct(string $secretKey, string $publicKey)
+    public function __construct(string $secretKey, string $publicKey = null)
     {
         try {
-            $this->keypair = \sodium_crypto_box_keypair_from_secretkey_and_publickey(
-                $secretKey,
-                $publicKey
-            );
+            $this->secretKey = $secretKey;
+            if ($publicKey !== null) {
+                $this->keypair = new Keypair(
+                    $secretKey,
+                    $publicKey
+                );
+            }
         } catch (SodiumException $e) {
             throw new InvalidArgumentException($e->getMessage());
         }
@@ -45,11 +57,12 @@ class Response
      * 
      * @throws InvalidArguementException
      */
-    public function decrypt(string $response, string $nonce = null) : string
+    public function decrypt(string $response, string $nonce = null)
     {
         $version = $this->getVersion($response);
         if ($version === 2) {
             $nonce = \substr($response, 4, 24);
+
             // Determine the payload size sans the 64 byte checksum at the end
             $payload = \substr($response, 0, \strlen($response) - 64);
             $checksum = \substr($response, -64);
@@ -66,7 +79,15 @@ class Response
             $payload = \substr($payload, 0, -32);
             $body = \substr($payload, 60, \strlen($payload));
 
+            $this->keypair = new Keypair(
+                $this->secretKey,
+                $publicKey
+            );
+
             $decryptedPayload = $this->decrypt($body, $nonce);
+            if (!$decryptedPayload) {
+                throw new DecryptionFailedException;
+            }
             if (!$this->isSignatureValid($decryptedPayload, $signature, $sigPubKey)) {
                 throw new InvalidSignatureException;
             }
@@ -91,13 +112,17 @@ class Response
      * 
      * @throws InvalidArguementException
      */
-    private function decryptBody(string $response, string $nonce) : string
+    private function decryptBody(string $response, string $nonce)
     {
         try {
+            if ($this->keypair === null) {
+                throw new InvalidArguementException('Keypair not available');
+            }
+
             return \sodium_crypto_box_open(
                 $response,
                 $nonce,
-                $this->keypair
+                $this->keypair->getSodiumKeypair()
             );
         } catch (SodiumException $e) {
             throw new InvalidArgumentException($e->getMessage());

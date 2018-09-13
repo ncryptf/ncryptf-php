@@ -3,6 +3,7 @@
 namespace ncryptf;
 
 use ncryptf\Keypair;
+use ncryptf\exceptions\EncryptionFailedException;
 use InvalidArgumentException;
 use SodiumException;
 
@@ -33,7 +34,7 @@ class Request
     public function __construct(string $secretKey, string $publicKey)
     {
         try {
-            $this->keypair = \sodium_crypto_box_keypair_from_secretkey_and_publickey(
+            $this->keypair = new Keypair(
                 $secretKey,
                 $publicKey
             );
@@ -46,14 +47,14 @@ class Request
      * Encrypts a request body
      * 
      * @param string $request       The raw HTTP request as a string
-     * @param int    $version       Version to generate, defaults to 2
      * @param string $signatureKey  32 byte signature key
+     * @param int    $version       Version to generate, defaults to 2
      * @param string $nonce         Optional nonce. If not provided, a 24 byte nonce will be generated
      * @return string
      * 
      * @throws InvalidArguementException
      */
-    public function encrypt(string $request, string $signatureKey = null, string $nonce = null, int $version = 2) : string
+    public function encrypt(string $request, string $signatureKey = null, int $version = 2, string $nonce = null) : string
     {
         $this->nonce = $nonce ?? \random_bytes(SODIUM_CRYPTO_BOX_NONCEBYTES);
 
@@ -61,10 +62,14 @@ class Request
             if ($signatureKey === null || strlen($signatureKey) !== \SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
                 throw new InvalidArgumentException;
             }
-            
+
             $version = \pack('h*', 'DE259002');
             $body = $this->encryptBody($request, $this->nonce);
-            $publicKey = \sodium_crypto_box_publickey($this->keypair);
+            if (!$body) {
+                throw new EncryptionFailedException;
+            }
+
+            $publicKey = \sodium_crypto_box_publickey_from_secretkey($this->keypair->getSecretKey());
             $sigPubKey = \sodium_crypto_sign_publickey_from_secretkey($signatureKey);
             $payload = $version . $this->nonce . $publicKey . $body . $sigPubKey . $this->sign($request, $signatureKey);
             $checksum = sodium_crypto_generichash($payload, $this->nonce, 64);
@@ -85,13 +90,13 @@ class Request
      * 
      * @throws InvalidArguementException
      */
-    private function encryptBody(string $request, string $nonce) : string
+    private function encryptBody(string $request, string $nonce)
     {
         try {
             return \sodium_crypto_box(
                 $request,
-                $this->nonce,
-                $this->keypair
+                $nonce,
+                $this->keypair->getSodiumKeypair()
             );
         } catch (SodiumException $e) {
             throw new InvalidArgumentException($e->getMessage());

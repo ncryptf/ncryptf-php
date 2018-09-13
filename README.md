@@ -196,24 +196,31 @@ Payloads can be encrypted as follows:
 ```php
 use ncryptf\Request;
 use ncryptf\Utils;
+use ncryptf\exceptions\EncryptionFailedException;
 
-// Generate your request keypair for your local device.
-$privateKeypair = Utils::generateKeypair();
+try {
+    // Generate your request keypair for your local device.
+    $privateKeypair = Utils::generateKeypair();
 
-// Create a new request object with your private key
-// and the servers private key
-$request = new Request(
-    $privateKeypair->getPublicKey(),
-    $publicKey
-);
+    // Create a new request object with your private key
+    // and the servers private key
+    $request = new Request(
+        $privateKeypair->getPublicKey(),
+        $publicKey
+    );
 
-// Encrypt JSON
-$encryptedRequest = $request->encrypt(
-    '{ "foo": "bar" }',
-    2,
-    $token->signature
-);
+    // Encrypt JSON
+    $encryptedRequest = $request->encrypt(
+        '{ "foo": "bar" }',
+        2,
+        $token->signature
+    );
+} catch (EncryptionFailedException $e) {
+    // Encrypting the body failed
+}
 ```
+
+> Note that only the v2 encryption is shown here.
 
 > Note that you need to have a pre-bootstrapped public key to encrypt data. For the v1 API, this is typically this is returned by `/api/v1/server/otk`.
 
@@ -223,6 +230,7 @@ Responses from the server can be decrypted as follows:
 
 ```php
 use ncryptf\Response;
+use ncryptf\exceptions\DecryptionFailedException;
 use ncryptf\exceptions\InvalidChecksumException;
 use ncryptf\exceptions\InvalidSignatureException;
 
@@ -232,7 +240,6 @@ try {
     // and the servers private key
     $response = new Response(
         \sodium_crypto_box_secretkey($privateKeypair['secret']),
-        $publicKey
     );
 
     // Extract the raw body from the response
@@ -240,6 +247,8 @@ try {
     $jsonResponse = $response->decrypt(
         $rawBody
     );
+} catch (DecryptionFailedException $e) {
+    // Decryption failed
 } catch (InvalidChecksumException $e) {
     // Request checksum failed
 } catch (InvalidSignatureException $e) {
@@ -247,3 +256,18 @@ try {
 }
 ```
 
+### V2 Encrypted Payload
+
+Verison 2 works identical to the version 1 payload, with the exception that all components needed to decrypt the message are bundled within the payload itself, rather than broken out into separate headers. This alleviates developer concerns with needing to manage multiple headers.
+
+The version 2 payload is described as follows. Each component is concatanated together.
+
+| Segment | Length |
+|---------|--------|
+| 4 byte header `DE259002` in binary format | 4 BYTES |
+| Nonce | 24 BYTES |
+| The public key associated to the private key | 32 BYTES |
+| Encrypted Body | X BYTES |
+| Signature Public Key | 32 BYTES |
+| Signature or raw request body | 64 BYTES |
+| Checksum of prior elements concatonated together | 64 bytes |

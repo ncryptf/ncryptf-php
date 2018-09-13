@@ -49,4 +49,17 @@ final class Keypair
     {
         return $this->secretKey;
     }
+
+    /**
+     * Returns the sodium keypair
+     * 
+     * @return string
+     */
+    public function getSodiumKeypair()
+    {
+        return \sodium_crypto_box_keypair_from_secretkey_and_publickey(
+            $this->getSecretKey(),
+            $this->getPublicKey()
+        );
+    }
 }
