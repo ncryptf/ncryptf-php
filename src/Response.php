@@ -14,7 +14,7 @@ class Response
     /**
      * Sodium CryptoBox Keypair
      *
-     * @var string
+     * @var Keypair
      */
     private $keypair;
 
