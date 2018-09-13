@@ -63,7 +63,7 @@ class Request
                 throw new InvalidArgumentException;
             }
 
-            $version = \pack('h*', 'DE259002');
+            $version = \pack('H*', 'DE259002');
             $body = $this->encryptBody($request, $this->nonce);
             if (!$body) {
                 throw new EncryptionFailedException;

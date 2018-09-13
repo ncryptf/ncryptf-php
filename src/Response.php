@@ -161,7 +161,7 @@ class Response
     private function getVersion(string $response) : int
     {
         $header = \substr($response, 0, 4);
-        if (\strtoupper(\unpack("h*", $header)[1]) === 'DE259002') {
+        if (\strtoupper(\bin2hex($header)) === 'DE259002') {
             return 2;
         }
 
