@@ -84,7 +84,7 @@ class Response
                 $publicKey
             );
 
-            $decryptedPayload = $this->decrypt($body, $nonce);
+            $decryptedPayload = $this->decryptBody($body, $nonce);
             if (!$decryptedPayload) {
                 throw new DecryptionFailedException;
             }
