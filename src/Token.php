@@ -62,7 +62,7 @@ final class Token
      *
      * @return boolean
      */
-    public function isExpired()
+    public function isExpired() : bool
     {
         return \time() > $this->expiresAt;
     }

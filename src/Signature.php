@@ -23,7 +23,7 @@ final class Signature
         DateTime $date,
         $payload = '',
         int $version = 2
-    ) {
+    ) : string {
         $httpMethod = \strtoupper($httpMethod);
         $data = self::serializePayload($payload);
         $hash = self::getSignatureHash($data, $salt, $version);
@@ -39,7 +39,7 @@ final class Signature
      * @param array|string $payload
      * @return string
      */
-    private static function serializePayload($payload = '')
+    private static function serializePayload($payload = '') : string
     {
         // If the payload is already JSON, return it
         if (\is_string($payload)) {
@@ -63,7 +63,7 @@ final class Signature
      * @param integer $version
      * @return string
      */
-    private static function getSignatureHash(string $data, string $salt, int $version = 2)
+    private static function getSignatureHash(string $data, string $salt, int $version = 2) : string
     {
         if ($version === 2) {
             return \base64_encode(\sodium_crypto_generichash($data, $salt, 64));

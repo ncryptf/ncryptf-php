@@ -195,20 +195,23 @@ Payloads can be encrypted as follows:
 
 ```php
 use ncryptf\Request;
+use ncryptf\Utils;
 
 // Generate your request keypair for your local device.
-$privateKeypair = Request::generateKeypair();
+$privateKeypair = Utils::generateKeypair();
 
 // Create a new request object with your private key
 // and the servers private key
 $request = new Request(
-    \sodium_crypto_box_secretkey($privateKeypair['secret']),
+    $privateKeypair->getPublicKey(),
     $publicKey
 );
 
 // Encrypt JSON
 $encryptedRequest = $request->encrypt(
-    '{ "foo": "bar" }'
+    '{ "foo": "bar" }',
+    2,
+    $token->signature
 );
 ```
 
@@ -220,41 +223,27 @@ Responses from the server can be decrypted as follows:
 
 ```php
 use ncryptf\Response;
+use ncryptf\exceptions\InvalidChecksumException;
+use ncryptf\exceptions\InvalidSignatureException;
 
 // Represents the httpResponse
-$httpResponse ...;
+try {
+    // Create a new request object with your private key
+    // and the servers private key
+    $response = new Response(
+        \sodium_crypto_box_secretkey($privateKeypair['secret']),
+        $publicKey
+    );
 
-// Reuse the keypair uses on the request
-$privateKeypair = Request::generateKeypair();
-
-// Create a new request object with your private key
-// and the servers private key
-$response = new Response(
-    \sodium_crypto_box_secretkey($privateKeypair['secret']),
-    $publicKey
-);
-
-// Extract the raw body from the response
-$rawBody = \base64_decode($httpResponse->getBody());
-$nonce = \base64_decode($httpResponse->headers->get('x-nonce');
-$jsonResponse = $response->decrypt(
-    $rawBody,
-    $nonce
-);
-
-if ($jsonResponse === false) {
-    // Decryption failure
-}
-
-// For additional security, verify the detacted signature
-$signature = \base64_decode($httpResponse->headers->get('x-signature'));
-$signaturePublicKey = \base64_decode($httpResponse->headers->get('x-sigpubkey'));
-
-if (!$response->isSignatureValid(
-    $jsonResponse, // The JSON data is signed before encrypting
-    $signature,
-    $signaturePublicKey
-)) {
-    // Signature isn't valid, the request has been tampered with and should not be trusted
+    // Extract the raw body from the response
+    $rawBody = \base64_decode($httpResponse->getBody());
+    $jsonResponse = $response->decrypt(
+        $rawBody
+    );
+} catch (InvalidChecksumException $e) {
+    // Request checksum failed
+} catch (InvalidSignatureException $e) {
+    // Signature verification failed
 }
 ```
+

@@ -133,7 +133,7 @@ class Authorization
      *
      * @return string
      */
-    public function getSignatureString()
+    public function getSignatureString() : string
     {
         return $this->signature;
     }
@@ -143,7 +143,7 @@ class Authorization
      *
      * @return string
      */
-    public function getHMAC()
+    public function getHMAC() : string
     {
         return $this->hmac;
     }
@@ -153,7 +153,7 @@ class Authorization
      *
      * @return string
      */
-    public function getDate()
+    public function getDate() : string
     {
         return $this->date;
     }
@@ -163,7 +163,7 @@ class Authorization
      *
      * @return string
      */
-    public function getHeader()
+    public function getHeader() : string
     {
         $salt = \base64_encode($this->salt);
         $hmac = \base64_encode($this->hmac);
@@ -192,7 +192,7 @@ class Authorization
      * @param integer $driftAllowance
      * @return boolean
      */
-    public function verify(string $hmac, self $auth, int $driftAllowance = 90)
+    public function verify(string $hmac, self $auth, int $driftAllowance = 90) : bool
     {
         $drift = $this->getTimeDrift($auth->getDate());
         if ($drift && $drift >= $driftAllowance) {
