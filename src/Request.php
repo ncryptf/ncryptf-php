@@ -61,8 +61,7 @@ class Request
             if ($signatureKey === null || strlen($signatureKey) !== \SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
                 throw new InvalidArgumentException;
             }
-
-            // Version 2 payloads consist of a 4 byte version header marker, 24 byte nonce, 32 byte public key, x byte payload, 32 byte signature public key, 64 byte signature, followed by a 64 byte checksum
+            
             $version = \pack('h*', 'DE259002');
             $body = $this->encryptBody($request, $this->nonce);
             $publicKey = \sodium_crypto_box_publickey($this->keypair);
