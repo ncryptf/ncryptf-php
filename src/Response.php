@@ -31,7 +31,7 @@ class Response
      * @param string $secretKey The 32 byte secret key
      * @param string $publicKey The 32 byte public key (required for v1, optional for v2)
      * 
-     * @throws InvalidArguementException
+     * @throws InvalidArgumentException
      */
     public function __construct(string $secretKey, string $publicKey = null)
     {
@@ -55,7 +55,7 @@ class Response
      * @param string $response  The encrypted HTTP response, as a multi-byte string
      * @param string $nonce     The 32 byte nonce
      * 
-     * @throws InvalidArguementException
+     * @throws InvalidArgumentException
      */
     public function decrypt(string $response, string $nonce = null)
     {
@@ -110,13 +110,13 @@ class Response
      * @param string $nonce     The 32 byte nonce
      * @return string
      * 
-     * @throws InvalidArguementException
+     * @throws InvalidArgumentException
      */
     private function decryptBody(string $response, string $nonce)
     {
         try {
             if ($this->keypair === null) {
-                throw new InvalidArguementException('Keypair not available');
+                throw new InvalidArgumentException('Keypair not available');
             }
 
             return \sodium_crypto_box_open(
@@ -137,7 +137,7 @@ class Response
      * @param string $publicKey The signing public key
      * @return bool
      * 
-     *  @throws InvalidArguementException
+     *  @throws InvalidArgumentException
      */
     public function isSignatureValid(string $response, string $signature, string $publicKey) : bool
     {
