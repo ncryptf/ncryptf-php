@@ -20,7 +20,7 @@ class Response
 
     /**
      * Secret key
-     * 
+     *
      * @var string
      */
     private $secretKey;
@@ -30,7 +30,7 @@ class Response
      *
      * @param string $secretKey The 32 byte secret key
      * @param string $publicKey The 32 byte public key (required for v1, optional for v2)
-     * 
+     *
      * @throws InvalidArgumentException
      */
     public function __construct(string $secretKey, string $publicKey = null)
@@ -51,10 +51,10 @@ class Response
     /**
      * Decrypts a payload using the response and an optional nonce
      * Nonce is not required for v2 type signatures, but is required for v1 signatures
-     * 
+     *
      * @param string $response  The encrypted HTTP response, as a multi-byte string
      * @param string $nonce     The 32 byte nonce
-     * 
+     *
      * @throws InvalidArgumentException
      */
     public function decrypt(string $response, string $nonce = null)
@@ -109,7 +109,7 @@ class Response
      * @param string $response  The encrypted HTTP response, as a multi-byte string
      * @param string $nonce     The 32 byte nonce
      * @return string
-     * 
+     *
      * @throws InvalidArgumentException
      */
     private function decryptBody(string $response, string $nonce)
@@ -136,8 +136,8 @@ class Response
      * @param string $signature The raw multi-byte signature
      * @param string $publicKey The signing public key
      * @return bool
-     * 
-     *  @throws InvalidArgumentException
+     *
+     * @throws InvalidArgumentException
      */
     public function isSignatureValid(string $response, string $signature, string $publicKey) : bool
     {
@@ -154,7 +154,7 @@ class Response
 
     /**
      * Extracts the version from the response
-     * 
+     *
      * @param string $response  The encrypted http response
      * @return int
      */

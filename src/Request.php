@@ -28,7 +28,7 @@ class Request
      *
      * @param string $secretKey The 32 byte secret key
      * @param string $publicKey The 32 byte public keyy
-     * 
+     *
      * @throws InvalidArguementException
      */
     public function __construct(string $secretKey, string $publicKey)
@@ -45,13 +45,13 @@ class Request
 
     /**
      * Encrypts a request body
-     * 
+     *
      * @param string $request       The raw HTTP request as a string
      * @param string $signatureKey  32 byte signature key
      * @param int    $version       Version to generate, defaults to 2
      * @param string $nonce         Optional nonce. If not provided, a 24 byte nonce will be generated
      * @return string
-     * 
+     *
      * @throws InvalidArguementException
      */
     public function encrypt(string $request, string $signatureKey = null, int $version = 2, string $nonce = null) : string
@@ -87,7 +87,7 @@ class Request
      * @param string $request   The raw HTTP request as a string
      * @param string $nonce     Optional nonce. If not provided, a 24 byte nonce will be generated
      * @return string
-     * 
+     *
      * @throws InvalidArguementException
      */
     private function encryptBody(string $request, string $nonce)
@@ -109,7 +109,7 @@ class Request
      * @param string $request
      * @param string $secretKey
      * @return string
-     * 
+     *
      * @throws InvalidArguementException
      */
     public function sign(string $request, string $secretKey) : string

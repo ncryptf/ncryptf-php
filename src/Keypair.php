@@ -52,7 +52,7 @@ final class Keypair
 
     /**
      * Returns the sodium keypair
-     * 
+     *
      * @return string
      */
     public function getSodiumKeypair()
