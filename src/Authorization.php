@@ -205,7 +205,7 @@ final class Authorization
     }
 
     /**
-     * Validates a provided HMAC against an auth object and a date
+     * Validates a provided HMAC against an auth object and a drift
      *
      * @param string $hmac
      * @param self $auth
