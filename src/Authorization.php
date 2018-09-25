@@ -240,9 +240,9 @@ final class Authorization
         try {
             $realDate = new DateTime($date);
         } catch (\Exception $e) {
-            return false;
+            return null;
         }
 
-        return \abs($now->getTimestamp() - $realDate->getTimestamp());
+        return (int)\abs($now->getTimestamp() - $realDate->getTimestamp());
     }
 }
