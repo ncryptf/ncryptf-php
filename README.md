@@ -267,7 +267,7 @@ The version 2 payload is described as follows. Each component is concatanated to
 | 4 byte header `DE259002` in binary format | 4 BYTES |
 | Nonce | 24 BYTES |
 | The public key associated to the private key | 32 BYTES |
-| Encrypted Body | X BYTES |
+| Encrypted Body | X BYTES + 16 BYTE MAC |
 | Signature Public Key | 32 BYTES |
 | Signature or raw request body | 64 BYTES |
-| Checksum of prior elements concatonated together | 64 bytes |
+| Checksum of prior elements concatonated together | 64 BYTES |

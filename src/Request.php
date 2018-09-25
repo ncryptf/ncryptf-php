@@ -7,7 +7,7 @@ use ncryptf\exceptions\EncryptionFailedException;
 use InvalidArgumentException;
 use SodiumException;
 
-class Request
+final class Request
 {
     /**
      * Sodium CryptoBox Keypair
@@ -90,7 +90,7 @@ class Request
      *
      * @throws InvalidArguementException
      */
-    private function encryptBody(string $request, string $nonce)
+    private function encryptBody(string $request, string $nonce) : string
     {
         try {
             return \sodium_crypto_box(

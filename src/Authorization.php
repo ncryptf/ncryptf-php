@@ -6,7 +6,7 @@ use DateTime;
 use ncryptf\Signature;
 use ncryptf\Token;
 
-class Authorization
+final class Authorization
 {
     /**
      * The HMAC info parameter. Overwrite this class and redeclare to change.
@@ -149,6 +149,26 @@ class Authorization
     }
 
     /**
+     * Returns the base64 encoded HMAC
+     *
+     * @return string
+     */
+    public function getEncodedHMAC() : string
+    {
+        return \base64_encode($this->hmac);
+    }
+
+    /**
+     * Returns the base64 encoded salt
+     *
+     * @return string
+     */
+    public function getEncodedSalt() : string
+    {
+        return \base64_encode($this->salt);
+    }
+
+    /**
      * Returns an RFC1123 formatted date
      *
      * @return string
@@ -165,8 +185,8 @@ class Authorization
      */
     public function getHeader() : string
     {
-        $salt = \base64_encode($this->salt);
-        $hmac = \base64_encode($this->hmac);
+        $salt = $this->getEncodedSalt();
+        $hmac = $this->getEncodedHMAC();
 
         if ($this->version === 2) {
             $data = \base64_encode(\json_encode([
@@ -212,7 +232,7 @@ class Authorization
      * @param string $date
      * @return int|boolean
      */
-    private function getTimeDrift(string $date)
+    private function getTimeDrift(string $date) :? int
     {
         $now = new \DateTime();
         $now->format(\DateTime::RFC1123);

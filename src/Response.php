@@ -57,7 +57,7 @@ class Response
      *
      * @throws InvalidArgumentException
      */
-    public function decrypt(string $response, string $nonce = null)
+    public function decrypt(string $response, string $nonce = null) : string
     {
         $version = $this->getVersion($response);
         if ($version === 2) {
@@ -116,7 +116,7 @@ class Response
      *
      * @throws InvalidArgumentException
      */
-    private function decryptBody(string $response, string $nonce)
+    private function decryptBody(string $response, string $nonce) : string
     {
         try {
             if (\strlen($response) < SODIUM_CRYPTO_BOX_MACBYTES) {

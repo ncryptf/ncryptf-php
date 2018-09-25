@@ -13,7 +13,7 @@ final class Utils
      * @param string $data
      * @return boolean
      */
-    public static function zero(string &$data)
+    public static function zero(string &$data) : bool
     {
         return \sodium_memzero($data) === null;
     }
@@ -23,7 +23,7 @@ final class Utils
      *
      * @return \ncryptf\Keypair
      */
-    public static function generateKeypair()
+    public static function generateKeypair() : Keypair
     {
         try {
             $keypair = \sodium_crypto_box_keypair();
@@ -41,7 +41,7 @@ final class Utils
      *
      * @return \ncryptf\Keypair
      */
-    public static function generateSigningKeypair()
+    public static function generateSigningKeypair() : Keypair
     {
         try {
             $keypair = \sodium_crypto_sign_keypair();
