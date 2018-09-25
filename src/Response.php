@@ -61,6 +61,10 @@ class Response
     {
         $version = $this->getVersion($response);
         if ($version === 2) {
+            if (\strlen($response) < 236) {
+                throw new DecryptionFailedException;
+            }
+
             $nonce = \substr($response, 4, 24);
 
             // Determine the payload size sans the 64 byte checksum at the end
@@ -115,6 +119,9 @@ class Response
     private function decryptBody(string $response, string $nonce)
     {
         try {
+            if (\strlen($response) < SODIUM_CRYPTO_BOX_MACBYTES) {
+                throw new DecryptionFailedException;
+            }
             if ($this->keypair === null) {
                 throw new InvalidArgumentException('Keypair not available');
             }
@@ -160,6 +167,10 @@ class Response
      */
     private function getVersion(string $response) : int
     {
+        if (\strlen($response) < 16) {
+            throw new DecryptionFailedException("Message length is too short to determine version.");
+        }
+
         $header = \substr($response, 0, 4);
         if (\strtoupper(\bin2hex($header)) === 'DE259002') {
             return 2;
