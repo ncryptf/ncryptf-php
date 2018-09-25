@@ -1,12 +1,12 @@
 # ncryptf PHP
 
-[![Packagist Pre Release](https://img.shields.io/packagist/v/charlesportwoodii/ncryptf.svg?maxAge=86400?style=flat-square)](https://packagist.org/packages/charlesportwoodii/ncryptf)
-[![TravisCI](https://img.shields.io/travis/charlesportwoodii/ncryptf-php.svg?style=flat-square "TravisCI")](https://travis-ci.org/charlesportwoodii/ncryptf-php)
-[![Scrutinizer Code Quality](https://img.shields.io/scrutinizer/g/charlesportwoodii/ncryptf-php.svg?style=flat-square)](https://scrutinizer-ci.com/g/charlesportwoodii/ncryptf-php/)
-[![License](https://img.shields.io/badge/license-BSD-orange.svg?style=flat-square "License")](https://github.com/charlesportwoodii/ncryptf-php/blob/master/LICENSE.md)
+[![Packagist Pre Release](https://img.shields.io/packagist/v/ncryptf/ncryptf-php.svg?maxAge=86400?style=flat-square)](https://packagist.org/packages/ncryptf/ncryptf-php)
+[![TravisCI](https://img.shields.io/travis/ncryptf/ncryptf-php-php.svg?style=flat-square "TravisCI")](https://travis-ci.org/ncryptf/ncryptf-php-php)
+[![Scrutinizer Code Quality](https://img.shields.io/scrutinizer/g/ncryptf/ncryptf-php-php.svg?style=flat-square)](https://scrutinizer-ci.com/g/ncryptf/ncryptf-php-php/)
+[![License](https://img.shields.io/badge/license-BSD-orange.svg?style=flat-square "License")](https://github.com/ncryptf/ncryptf-php-php/blob/master/LICENSE.md)
 
 <center>
-    <img src="https://github.com/charlesportwoodii/ncryptf-php/blob/master/logo.png?raw=true" alt="ncryptf logo" width="400px"/>
+    <img src="https://github.com/ncryptf/ncryptf-php-php/blob/master/logo.png?raw=true" alt="ncryptf logo" width="400px"/>
 </center>
 
 A library for facilitating hashed based KDF signature authentication, and end-to-end encrypted communication with compatible API's.
@@ -20,7 +20,7 @@ At a high level, an HMAC signature is created based upon the raw request body, t
 This library is made available through composer:
 
 ```
-composer require charlesportwoodii/ncryptf
+composer require ncryptf/ncryptf-php
 ```
 
 Supporting API's will return the following payload containing at minimum the following information.
