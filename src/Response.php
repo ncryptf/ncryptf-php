@@ -49,7 +49,7 @@ class Response
         $version = static::getVersion($response);
         if ($version === 2) {
             if (\strlen($response) < 236) {
-                throw new DecryptionFailedException(sprintf("Message is %d bytes, however 236+ were expected", \strlen($response)));
+                throw new InvalidArgumentException(sprintf("Message is %d bytes, however 236+ were expected", \strlen($response)));
             }
 
             $nonce = \substr($response, 4, 24);
@@ -192,7 +192,7 @@ class Response
             }
             
             $payload = \substr($response, 0, \strlen($response) - 64);
-            return  \substr($payload, -32);
+            return \substr($payload, -32);
         }
 
         throw new InvalidArgumentException('The response provided is not suitable for public key extraction.');
