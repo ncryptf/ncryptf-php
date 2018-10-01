@@ -86,6 +86,10 @@ class Response
             throw new InvalidArgumentException('Nonce is required to decrypt v1 requests.');
         }
 
+        if (\strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
+            throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
+        }
+        
         return $this->decryptBody($response, $publicKey, $nonce);
     }
 
@@ -103,6 +107,10 @@ class Response
     private function decryptBody(string $response, string $publicKey, string $nonce) : string
     {
         try {
+            if (\strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
+                throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
+            }
+
             if (\strlen($response) < SODIUM_CRYPTO_BOX_MACBYTES) {
                 throw new DecryptionFailedException("Minimum message length not met.");
             }

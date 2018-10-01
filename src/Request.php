@@ -77,7 +77,7 @@ final class Request
 
             $publicKey = \sodium_crypto_box_publickey_from_secretkey($this->secretKey);
             $sigPubKey = \sodium_crypto_sign_publickey_from_secretkey($this->signatureSecretKey);
-            $payload = $version . $this->nonce . $publicKey . $body . $sigPubKey . $this->sign($request, $this->signatureSecretKey);
+            $payload = $version . $this->nonce . $publicKey . $body . $sigPubKey . $this->sign($request);
             $checksum = sodium_crypto_generichash($payload, $this->nonce, 64);
 
             return $payload . $checksum;
