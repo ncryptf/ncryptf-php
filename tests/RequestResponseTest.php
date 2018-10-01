@@ -94,4 +94,16 @@ JSON;
             \base64_decode($this->signatureKeyPair['public'])
         ));
     }
+
+    public function testPublicKeyExtraction()
+    {
+        $publicKey = Response::getPublicKeyFromResponse(\base64_decode($this->expectedv2Cipher));
+        $this->assertEquals(\base64_decode($this->clientKeyPair['public']), $publicKey);
+    }
+
+    public function testVersion()
+    {
+        $this->assertEquals(1, Response::getVersion(\base64_decode($this->expectedCipher)));
+        $this->assertEquals(2, Response::getVersion(\base64_decode($this->expectedv2Cipher)));
+    }
 }
