@@ -12,13 +12,6 @@ use SodiumException;
 class Response
 {
     /**
-     * Sodium CryptoBox Keypair
-     *
-     * @var Keypair
-     */
-    private $keypair;
-
-    /**
      * Secret key
      *
      * @var string
@@ -29,23 +22,16 @@ class Response
      * Constructor
      *
      * @param string $secretKey The 32 byte secret key
-     * @param string $publicKey The 32 byte public key (required for v1, optional for v2)
      *
      * @throws InvalidArgumentException
      */
-    public function __construct(string $secretKey, string $publicKey = null)
+    public function __construct(string $secretKey)
     {
-        try {
-            $this->secretKey = $secretKey;
-            if ($publicKey !== null) {
-                $this->keypair = new Keypair(
-                    $secretKey,
-                    $publicKey
-                );
-            }
-        } catch (SodiumException $e) {
-            throw new InvalidArgumentException($e->getMessage());
+        if (\strlen($secretKey) !== SODIUM_CRYPTO_BOX_SECRETKEYBYTES) {
+            throw new InvalidArgumentException(sprintf("Secret key should be %d bytes.", SODIUM_CRYPTO_BOX_SECRETKEYBYTES));
         }
+
+        $this->secretKey = $secretKey;
     }
 
     /**
@@ -53,16 +39,17 @@ class Response
      * Nonce is not required for v2 type signatures, but is required for v1 signatures
      *
      * @param string $response  The encrypted HTTP response, as a multi-byte string
-     * @param string $nonce     The 32 byte nonce
+     * @param string $publicKey 32 byte optional public key
+     * @param string $nonce     The 32 byte nonce, optional
      *
      * @throws InvalidArgumentException
      */
-    public function decrypt(string $response, string $nonce = null) : string
+    public function decrypt(string $response, string $publicKey = null, string $nonce = null) : string
     {
         $version = static::getVersion($response);
         if ($version === 2) {
             if (\strlen($response) < 236) {
-                throw new DecryptionFailedException;
+                throw new DecryptionFailedException(sprintf("Message is %d bytes, however 236+ were expected", \strlen($response)));
             }
 
             $nonce = \substr($response, 4, 24);
@@ -73,7 +60,7 @@ class Response
 
             // Verify the checksum to ensure the headers haven't been tampered with
             if ($checksum !== \sodium_crypto_generichash($payload, $nonce, 64)) {
-                throw new InvalidChecksumException;
+                throw new InvalidChecksumException("Calculated checksum differs from the checksum associated with the message.");
             }
             
             $publicKey = \substr($response, 28, 32);
@@ -83,17 +70,13 @@ class Response
             $payload = \substr($payload, 0, -32);
             $body = \substr($payload, 60, \strlen($payload));
 
-            $this->keypair = new Keypair(
-                $this->secretKey,
-                $publicKey
-            );
-
-            $decryptedPayload = $this->decryptBody($body, $nonce);
+            $decryptedPayload = $this->decryptBody($body, $publicKey, $nonce);
             if (!$decryptedPayload) {
-                throw new DecryptionFailedException;
+                throw new DecryptionFailedException('An unexpected error occurred when decrypting the message.');
             }
+
             if (!$this->isSignatureValid($decryptedPayload, $signature, $sigPubKey)) {
-                throw new InvalidSignatureException;
+                throw new InvalidSignatureException('The message signature is not valid.');
             }
 
             return $decryptedPayload;
@@ -103,7 +86,7 @@ class Response
             throw new InvalidArgumentException('Nonce is required to decrypt v1 requests.');
         }
 
-        return $this->decryptBody($response, $nonce);
+        return $this->decryptBody($response, $publicKey, $nonce);
     }
 
     /**
@@ -111,25 +94,28 @@ class Response
      * This will return the decrypted string of decrypt was successful, and false otherwise
      *
      * @param string $response  The encrypted HTTP response, as a multi-byte string
+     * @param string $publicKey 32 byte public key
      * @param string $nonce     The 32 byte nonce
      * @return string
      *
      * @throws InvalidArgumentException
      */
-    private function decryptBody(string $response, string $nonce) : string
+    private function decryptBody(string $response, string $publicKey, string $nonce) : string
     {
         try {
             if (\strlen($response) < SODIUM_CRYPTO_BOX_MACBYTES) {
-                throw new DecryptionFailedException;
+                throw new DecryptionFailedException("Minimum message length not met.");
             }
-            if ($this->keypair === null) {
-                throw new InvalidArgumentException('Keypair not available');
-            }
+
+            $keypair = new Keypair(
+                $this->secretKey,
+                $publicKey
+            );
 
             if ($result = \sodium_crypto_box_open(
                 $response,
                 $nonce,
-                $this->keypair->getSodiumKeypair()
+                $keypair->getSodiumKeypair()
             )) {
                 return $result;
             }

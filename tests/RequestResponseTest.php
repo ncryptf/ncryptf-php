@@ -50,10 +50,10 @@ JSON;
     {
         $request = new Request(
             \base64_decode($this->clientKeyPair['secret']),
-            \base64_decode($this->serverKeyPair['public'])
+            \base64_decode($this->signatureKeyPair['secret'])
         );
 
-        $cipher = $request->encrypt($this->payload, \base64_decode($this->signatureKeyPair['secret']), 2, \base64_decode($this->nonce));
+        $cipher = $request->encrypt($this->payload, \base64_decode($this->serverKeyPair['public']), 2, \base64_decode($this->nonce));
 
         $this->assertEquals($this->expectedv2Cipher, \base64_encode($cipher));
 
@@ -70,22 +70,21 @@ JSON;
     {
         $request = new Request(
             \base64_decode($this->clientKeyPair['secret']),
-            \base64_decode($this->serverKeyPair['public'])
+            \base64_decode($this->signatureKeyPair['secret'])
         );
 
-        $cipher = $request->encrypt($this->payload, null, 1, \base64_decode($this->nonce));
+        $cipher = $request->encrypt($this->payload, \base64_decode($this->serverKeyPair['public']), 1, \base64_decode($this->nonce));
 
-        $signature = $request->sign($this->payload, \base64_decode($this->signatureKeyPair['secret']));
+        $signature = $request->sign($this->payload);
         
         $this->assertEquals($this->expectedCipher, \base64_encode($cipher));
         $this->assertEquals($this->expectedSignature, \base64_encode($signature));
 
         $response = new Response(
-            \base64_decode($this->serverKeyPair['secret']),
-            \base64_decode($this->clientKeyPair['public'])
+            \base64_decode($this->serverKeyPair['secret'])
         );
 
-        $plain = $response->decrypt($cipher, \base64_decode($this->nonce));
+        $plain = $response->decrypt($cipher, \base64_decode($this->clientKeyPair['public']), \base64_decode($this->nonce));
 
         $this->assertEquals($this->payload, $plain);
 

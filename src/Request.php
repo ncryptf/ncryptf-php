@@ -10,11 +10,14 @@ use SodiumException;
 final class Request
 {
     /**
-     * Sodium CryptoBox Keypair
-     *
-     * @var Keypair
+     * @var string
      */
-    private $keypair;
+    private $secretKey;
+
+    /**
+     * @var string
+     */
+    private $signatureSecretKey;
 
     /**
      * 24 byte nonce
@@ -27,58 +30,62 @@ final class Request
      * Constructor
      *
      * @param string $secretKey The 32 byte secret key
-     * @param string $publicKey The 32 byte public keyy
+     * @param string $signatureSecretKey The 64 byte public keyy
      *
-     * @throws InvalidArguementException
+     * @throws InvalidArgumentException
      */
-    public function __construct(string $secretKey, string $publicKey)
+    public function __construct(string $secretKey, string $signatureSecretKey)
     {
-        try {
-            $this->keypair = new Keypair(
-                $secretKey,
-                $publicKey
-            );
-        } catch (SodiumException $e) {
-            throw new InvalidArgumentException($e->getMessage());
+        if (\strlen($secretKey) !== SODIUM_CRYPTO_BOX_SECRETKEYBYTES) {
+            throw new InvalidArgumentException(sprintf("Secret key should be %d bytes.", SODIUM_CRYPTO_BOX_SECRETKEYBYTES));
         }
+
+        $this->secretKey = $secretKey;
+
+        if (\strlen($signatureSecretKey) !== SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
+            throw new InvalidArgumentException(sprintf("Signing key should be %d bytes.", SODIUM_CRYPTO_SIGN_SECRETKEYBYTES));
+        }
+
+        $this->signatureSecretKey = $signatureSecretKey;
     }
 
     /**
      * Encrypts a request body
      *
-     * @param string $request       The raw HTTP request as a string
-     * @param string $signatureKey  32 byte signature key
-     * @param int    $version       Version to generate, defaults to 2
-     * @param string $nonce         Optional nonce. If not provided, a 24 byte nonce will be generated
+     * @param string $request           The raw HTTP request as a string
+     * @param string $remotePublicKey   32 byte public key
+     * @param int    $version           Version to generate, defaults to 2
+     * @param string $nonce             Optional nonce. If not provided, a 24 byte nonce will be generated
      * @return string
      *
-     * @throws InvalidArguementException
+     * @throws InvalidArgumentException
      */
-    public function encrypt(string $request, string $signatureKey = null, int $version = 2, string $nonce = null) : string
+    public function encrypt(string $request, string $remotePublicKey, int $version = 2, string $nonce = null) : string
     {
         $this->nonce = $nonce ?? \random_bytes(SODIUM_CRYPTO_BOX_NONCEBYTES);
 
+        if (\strlen($remotePublicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
+            throw new InvalidArgumentException(sprintf("Remote public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
+        }
+
         if ($version === 2) {
-            if ($signatureKey === null || strlen($signatureKey) !== \SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
-                throw new InvalidArgumentException;
-            }
-
             $version = \pack('H*', 'DE259002');
-            $body = $this->encryptBody($request, $this->nonce);
+            $body = $this->encryptBody($request, $remotePublicKey, $this->nonce);
             if (!$body) {
-                throw new EncryptionFailedException;
+                throw new EncryptionFailedException('An unexpected error occured when encrypting the message.');
             }
 
-            $publicKey = \sodium_crypto_box_publickey_from_secretkey($this->keypair->getSecretKey());
-            $sigPubKey = \sodium_crypto_sign_publickey_from_secretkey($signatureKey);
-            $payload = $version . $this->nonce . $publicKey . $body . $sigPubKey . $this->sign($request, $signatureKey);
+            $publicKey = \sodium_crypto_box_publickey_from_secretkey($this->secretKey);
+            $sigPubKey = \sodium_crypto_sign_publickey_from_secretkey($this->signatureSecretKey);
+            $payload = $version . $this->nonce . $publicKey . $body . $sigPubKey . $this->sign($request, $this->signatureSecretKey);
             $checksum = sodium_crypto_generichash($payload, $this->nonce, 64);
 
             return $payload . $checksum;
         }
 
+
         // Version 1 payload is just a single sodium crypto box
-        return $this->encryptBody($request, $this->nonce);
+        return $this->encryptBody($request, $remotePublicKey, $this->nonce);
     }
 
     /**
@@ -90,13 +97,17 @@ final class Request
      *
      * @throws InvalidArguementException
      */
-    private function encryptBody(string $request, string $nonce) : string
+    private function encryptBody(string $request, string $publicKey, string $nonce) : string
     {
         try {
+            $keypair = new Keypair(
+                $this->secretKey,
+                $publicKey
+            );
             return \sodium_crypto_box(
                 $request,
                 $nonce,
-                $this->keypair->getSodiumKeypair()
+                $keypair->getSodiumKeypair()
             );
         } catch (SodiumException $e) {
             throw new InvalidArgumentException($e->getMessage());
@@ -112,12 +123,12 @@ final class Request
      *
      * @throws InvalidArguementException
      */
-    public function sign(string $request, string $secretKey) : string
+    public function sign(string $request) : string
     {
         try {
             return \sodium_crypto_sign_detached(
                 $request,
-                $secretKey
+                $this->signatureSecretKey
             );
         } catch (SodiumException $e) {
             throw new InvalidArgumentException($e->getMessage());
