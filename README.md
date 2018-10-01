@@ -200,20 +200,19 @@ use ncryptf\exceptions\EncryptionFailedException;
 
 try {
     // Generate your request keypair for your local device.
-    $privateKeypair = Utils::generateKeypair();
-
+    $keypair = Utils::generateKeypair();
+    $signatureKp = Utils::generateSigningKeypair()
     // Create a new request object with your private key
     // and the servers private key
     $request = new Request(
-        $privateKeypair->getPublicKey(),
-        $publicKey
+        $privateKeypair->getSecretKey(),
+        $signatureKp->getSecretKey
     );
 
     // Encrypt JSON
     $encryptedRequest = $request->encrypt(
         '{ "foo": "bar" }',
-        2,
-        $token->signature
+        $remotePublicKey
     );
 } catch (EncryptionFailedException $e) {
     // Encrypting the body failed
@@ -245,7 +244,8 @@ try {
     // Extract the raw body from the response
     $rawBody = \base64_decode($httpResponse->getBody());
     $jsonResponse = $response->decrypt(
-        $rawBody
+        $rawBody,
+        $remotePublicKey
     );
 } catch (DecryptionFailedException $e) {
     // Decryption failed
