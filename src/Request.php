@@ -99,6 +99,10 @@ final class Request
      */
     private function encryptBody(string $request, string $publicKey, string $nonce) : string
     {
+        if (\strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
+            throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
+        }
+
         try {
             $keypair = new Keypair(
                 $this->secretKey,
