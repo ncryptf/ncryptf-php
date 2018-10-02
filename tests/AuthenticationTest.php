@@ -31,9 +31,17 @@ final class MockAuthentication extends AbstractAuthentication
             \strtotime('+4 hours')
         );
     }
+    
+    protected function getUserFromToken(Token $token)
+    {
+        return [
+            'id' => 1
+        ];
+    }
 
     protected function getRequestBody(ServerRequestInterface $request) : string
     {
+        // Return the raw requestbody
         return $request->getBody()->getContents();
     }
 }
@@ -48,6 +56,7 @@ final class AuthenticationTest extends AbstractTest
                     new MockAuthentication,
                     function ($request, $next) {
                         $this->assertInstanceOf('\ncryptf\Token', $request->getAttribute('ncryptf-token'));
+                        $this->assertEquals(true, \is_array($request->getAttribute('ncryptf-user')));
                         return $next->handle($request);
                     }
                 ],

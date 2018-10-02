@@ -271,3 +271,50 @@ The version 2 payload is described as follows. Each component is concatanated to
 | Signature Public Key | 32 BYTES |
 | Signature or raw request body | 64 BYTES |
 | Checksum of prior elements concatonated together | 64 BYTES |
+
+## PSR-15 Middleware
+
+Ncryptf supports a PSR-15 middleware via `ncryptf\middleware\AbstractAuthentication`, which simply needs to be extended for token extraction and user retrieval.
+
+```php
+final class Authentication extends AbstractAuthentication
+{
+    /**
+     *  Given an access token, return an `ncryptf\Token` instance.
+     */
+    protected function getTokenFromAccessToken(string $accessToken) :? Token
+    {
+        // Search for token in database
+        return \ncryptf\Token(...);
+    }
+    
+    protected function getUserFromToken(Token $token)
+    {
+        // Convert a token to a user.
+        return User::find()
+            ->where(['access_token' => $token['access_token']])
+            ->one();
+    }
+
+    protected function getRequestBody(ServerRequestInterface $request) : string
+    {
+        // Return the raw requestbody
+        // If the request is encrypted with ncryptf, you'll need to decrypt it before hand and return it
+        // This library cannot provide this out-of-the-box as it requires knowledge of your encryption key keystore
+        return $request->getBody()->getContents();
+    }
+}
+```
+
+A simple example is shown as follows:
+
+```php
+$response = Dispatcher::run([
+    new Authentication,
+    function ($request, $next) {
+        // This is your user, do whatever you need to do here.
+        $user = $request->getAttribute('ncryptf-user');
+        return $next->handle($request);
+    }
+], $request);
+```

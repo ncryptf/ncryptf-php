@@ -58,7 +58,12 @@ abstract class AbstractAuthentication implements MiddlewareInterface
                     );
 
                     if ($auth->verify(\base64_decode($params['hmac']), $auth, static::DRIFT_TIME_ALLOWANCE)) {
-                        return $handler->handle($request->withAttribute('ncryptf-token', $token));
+                        return $handler->handle(
+                            $request
+                                ->withAttribute('ncryptf-token', $token)
+                                ->withAttribute('ncryptf-user', $this->getUserFromToken($token))
+
+                        );
                     }
                 } catch (Exception $e) {
                     throw $e;
@@ -100,4 +105,12 @@ abstract class AbstractAuthentication implements MiddlewareInterface
      * @return string
      */
     abstract protected function getRequestBody(ServerRequestInterface $request) : string;
+
+    /**
+     * Given a particular token, returns an object, array, or integer representing the user
+     * 
+     * @param \ncryptf\Token $token
+     * @return integer|array|object
+     */
+    abstract protected function getUserFromToken(Token $token);
 }
