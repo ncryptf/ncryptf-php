@@ -62,7 +62,6 @@ abstract class AbstractAuthentication implements MiddlewareInterface
                             $request
                                 ->withAttribute('ncryptf-token', $token)
                                 ->withAttribute('ncryptf-user', $this->getUserFromToken($token))
-
                         );
                     }
                 } catch (Exception $e) {
@@ -89,7 +88,7 @@ abstract class AbstractAuthentication implements MiddlewareInterface
     /**
      * Returns the \ncryptf\Token associated to the given access token.
      * If the access token is not found, `NULL` should be returned
-     * 
+     *
      * @param string $accessToken
      * @return \ncryptf\Token
      */
@@ -98,9 +97,9 @@ abstract class AbstractAuthentication implements MiddlewareInterface
     /**
      * Returns the plaintext request body. If the request is encrypted with vnd.ncryptf+<type>
      * It should return the decrypted plaintext.
-     * 
+     *
      * If the request body is empty, an empty string `""` should be returned.
-     * 
+     *
      * @param ServerRequestInterface $request
      * @return string
      */
@@ -108,7 +107,7 @@ abstract class AbstractAuthentication implements MiddlewareInterface
 
     /**
      * Given a particular token, returns an object, array, or integer representing the user
-     * 
+     *
      * @param \ncryptf\Token $token
      * @return integer|array|object
      */
