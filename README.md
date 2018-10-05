@@ -30,7 +30,7 @@ Supporting API's will return the following payload containing at minimum the fol
     "access_token": "7XF56VIP7ZQQOLGHM6MRIK56S2QS363ULNB5UKNFMJRQVYHQH7IA",
     "refresh_token": "MA2JX5FXWS57DHW4OIHHQDCJVGS3ZKKFCL7XM4GNOB567I6ER4LQ",
     "ikm": "bDEyECRvKKE8w81fX4hz/52cvHsFPMGeJ+a9fGaVvWM=",
-    "signing": "ecYXfAwNVoS9ePn4xWhiJOdXQzr6LpJIeIn4AVju/Ug=",
+    "signing": "7v/CdiGoEI7bcj7R2EyDPH5nrCd2+7rHYNACB+Kf2FMx405und2KenGjNpCBPv0jOiptfHJHiY3lldAQTGCdqw==",
     "expires_at": 1472678411
 }
 ```
@@ -74,7 +74,7 @@ $token = new Token(
     '7XF56VIP7ZQQOLGHM6MRIK56S2QS363ULNB5UKNFMJRQVYHQH7IA',
     'MA2JX5FXWS57DHW4OIHHQDCJVGS3ZKKFCL7XM4GNOB567I6ER4LQ',
     \base64_decode('bDEyECRvKKE8w81fX4hz/52cvHsFPMGeJ+a9fGaVvWM='),
-    \base64_decode('ecYXfAwNVoS9ePn4xWhiJOdXQzr6LpJIeIn4AVju/Ug='),
+    \base64_decode('7v/CdiGoEI7bcj7R2EyDPH5nrCd2+7rHYNACB+Kf2FMx405und2KenGjNpCBPv0jOiptfHJHiY3lldAQTGCdqw=='),
     1472678411
 );
 
