@@ -62,8 +62,6 @@ final class Token
         $this->ikm = $ikm;
 
         if (\strlen($signature) !== 64) {
-            var_dump(\strlen($signature));
-            die();
             throw new InvalidArgumentException(sprintf("Signature secret key should be %d bytes.", 64));
         }
         
