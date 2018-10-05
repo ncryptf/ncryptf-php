@@ -27,7 +27,7 @@ final class MockAuthentication extends AbstractAuthentication
             'x2gMeJ5Np0CcKpZav+i9iiXeQBtaYMQ/yeEtcOgY3J',
             'LRSEe5zHb1aq20Hr9te2sQF8sLReSkO8bS1eD/9LDM8',
             \base64_decode('f2mTaH9vkZZQyF7SxVeXDlOSDbVwjUzhdXv2T/YYO8k='),
-            \base64_decode('waWBMawHD1zpAFRcX7e45L1aqsA3mEeSOwXqq4l1i3I='),
+            \base64_decode('7v/CdiGoEI7bcj7R2EyDPH5nrCd2+7rHYNACB+Kf2FMx405und2KenGjNpCBPv0jOiptfHJHiY3lldAQTGCdqw=='),
             \strtotime('+4 hours')
         );
     }
@@ -52,7 +52,8 @@ final class AuthenticationTest extends AbstractTest
     {
         foreach ($this->testCases as $k => $params) {
             $auth = new Authorization($params[0], $params[1], $this->token, new DateTime, $params[2]);
-            $response = Dispatcher::run([
+            $response = Dispatcher::run(
+                [
                     new MockAuthentication,
                     function ($request, $next) {
                         $this->assertInstanceOf('\ncryptf\Token', $request->getAttribute('ncryptf-token'));
@@ -62,12 +63,12 @@ final class AuthenticationTest extends AbstractTest
                 ],
                 Factory::createServerRequest($params[0], $params[1])
                     ->withHeader('Authorization', $auth->getHeader())
-                    ->withBody((function() use ($params) {
-                        $stream = fopen('php://memory','r+');
+                    ->withBody((function () use ($params) {
+                        $stream = fopen('php://memory', 'r+');
                         fwrite($stream, \is_array($params[2]) ? \json_encode($params[2]): $params[2]);
                         rewind($stream);
                         
-                        return new \Zend\Diactoros\Stream($stream);                            
+                        return new \Zend\Diactoros\Stream($stream);
                     })())
             );
     
@@ -78,7 +79,8 @@ final class AuthenticationTest extends AbstractTest
     public function testError()
     {
         $auth = new Authorization('GET', '/api/v1/user/index', $this->token, new DateTime, '{"foo":"bar"}');
-        $response = Dispatcher::run([
+        $response = Dispatcher::run(
+            [
                 new MockAuthentication
             ],
             Factory::createServerRequest('GET', '/api/v1/user/index')

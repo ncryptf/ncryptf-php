@@ -53,31 +53,31 @@ final class Request
      * Encrypts a request body
      *
      * @param string $request           The raw HTTP request as a string
-     * @param string $remotePublicKey   32 byte public key
+     * @param string $publicKey   32 byte public key
      * @param int    $version           Version to generate, defaults to 2
      * @param string $nonce             Optional nonce. If not provided, a 24 byte nonce will be generated
      * @return string
      *
      * @throws InvalidArgumentException
      */
-    public function encrypt(string $request, string $remotePublicKey, int $version = 2, string $nonce = null) : string
+    public function encrypt(string $request, string $publicKey, int $version = 2, string $nonce = null) : string
     {
         $this->nonce = $nonce ?? \random_bytes(SODIUM_CRYPTO_BOX_NONCEBYTES);
 
-        if (\strlen($remotePublicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
+        if (\strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
             throw new InvalidArgumentException(sprintf("Remote public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
         }
 
         if ($version === 2) {
             $version = \pack('H*', 'DE259002');
-            $body = $this->encryptBody($request, $remotePublicKey, $this->nonce);
+            $body = $this->encryptBody($request, $publicKey, $this->nonce);
             if (!$body) {
                 throw new EncryptionFailedException('An unexpected error occured when encrypting the message.');
             }
 
-            $publicKey = \sodium_crypto_box_publickey_from_secretkey($this->secretKey);
+            $iPublicKey = \sodium_crypto_box_publickey_from_secretkey($this->secretKey);
             $sigPubKey = \sodium_crypto_sign_publickey_from_secretkey($this->signatureSecretKey);
-            $payload = $version . $this->nonce . $publicKey . $body . $sigPubKey . $this->sign($request);
+            $payload = $version . $this->nonce . $iPublicKey . $body . $sigPubKey . $this->sign($request);
             $checksum = sodium_crypto_generichash($payload, $this->nonce, 64);
 
             return $payload . $checksum;
@@ -85,7 +85,7 @@ final class Request
 
 
         // Version 1 payload is just a single sodium crypto box
-        return $this->encryptBody($request, $remotePublicKey, $this->nonce);
+        return $this->encryptBody($request, $publicKey, $this->nonce);
     }
 
     /**
@@ -101,6 +101,10 @@ final class Request
     {
         if (\strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
             throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
+        }
+
+        if (\strlen($nonce) !== SODIUM_CRYPTO_BOX_NONCEBYTES) {
+            throw new InvalidArgumentException(sprintf("Nonce should be %d bytes.", SODIUM_CRYPTO_BOX_NONCEBYTES));
         }
 
         try {

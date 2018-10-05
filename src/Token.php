@@ -2,6 +2,8 @@
 
 namespace ncryptf;
 
+use InvalidArgumentException;
+
 final class Token
 {
     /**
@@ -52,7 +54,19 @@ final class Token
     {
         $this->accessToken = $accessToken;
         $this->refreshToken = $refreshToken;
+
+        if (\strlen($ikm) !== 32) {
+            throw new InvalidArgumentException(sprintf("Initial key material should be %d bytes.", 32));
+        }
+
         $this->ikm = $ikm;
+
+        if (\strlen($signature) !== 64) {
+            var_dump(\strlen($signature));
+            die();
+            throw new InvalidArgumentException(sprintf("Signature secret key should be %d bytes.", 64));
+        }
+        
         $this->signature = $signature;
         $this->expiresAt = $expiresAt;
     }

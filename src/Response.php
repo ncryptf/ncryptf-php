@@ -46,6 +46,7 @@ class Response
      */
     public function decrypt(string $response, string $publicKey = null, string $nonce = null) : string
     {
+
         $version = static::getVersion($response);
         if ($version === 2) {
             if (\strlen($response) < 236) {
@@ -111,6 +112,10 @@ class Response
                 throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
             }
 
+            if (\strlen($nonce) !== SODIUM_CRYPTO_BOX_NONCEBYTES) {
+                throw new InvalidArgumentException(sprintf("Nonce should be %d bytes.", SODIUM_CRYPTO_BOX_NONCEBYTES));
+            }
+
             if (\strlen($response) < SODIUM_CRYPTO_BOX_MACBYTES) {
                 throw new DecryptionFailedException("Minimum message length not met.");
             }
@@ -146,6 +151,14 @@ class Response
      */
     public function isSignatureValid(string $response, string $signature, string $publicKey) : bool
     {
+        if (\strlen($publicKey) !== SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES) {
+            throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES));
+        }
+
+        if (\strlen($signature) !== 64) {
+            throw new InvalidArgumentException(sprintf("Signature %d bytes.", 64));
+        }
+        
         try {
             return \sodium_crypto_sign_verify_detached(
                 $signature,

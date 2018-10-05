@@ -2,6 +2,8 @@
 
 namespace ncryptf;
 
+use InvalidArgumentException;
+
 final class Keypair
 {
     /**
@@ -26,7 +28,16 @@ final class Keypair
      */
     public function __construct(string $secretKey, string $publicKey)
     {
+        if (\strlen($secretKey) % 16 !== 0) {
+            throw new InvalidArgumentException(sprintf("Secret key should be a multiple of %d bytes.", 16));
+        }
+
         $this->secretKey = $secretKey;
+
+        if (\strlen($publicKey) % 4 !== 0) {
+            throw new InvalidArgumentException(sprintf("Public key should be a multiple of %d bytes.", 4));
+        }
+        
         $this->publicKey = $publicKey;
     }
 
