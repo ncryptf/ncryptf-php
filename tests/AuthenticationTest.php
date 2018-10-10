@@ -4,12 +4,16 @@ namespace ncryptf\Tests;
 
 use DateTime;
 use ncryptf\Authorization;
+use ncryptf\Request;
 use ncryptf\Token;
-use ncryptf\middleware\AbstractAuthentication;
+use ncryptf\middleware\NcryptfPayload;
 use ncryptf\Tests\AbstractTest;
+use ncryptf\Tests\mock\Authentication;
+use ncryptf\Tests\mock\EncryptionKey;
 
 use PHPUnit\Framework\TestCase;
 
+use Middlewares\JsonPayload;
 use Middlewares\Utils\Dispatcher;
 use Middlewares\Utils\Factory;
 
@@ -18,33 +22,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-final class MockAuthentication extends AbstractAuthentication
-{
-    protected function getTokenFromAccessToken(string $accessToken) :? Token
-    {
-        // Return a fixed token
-        return new Token(
-            'x2gMeJ5Np0CcKpZav+i9iiXeQBtaYMQ/yeEtcOgY3J',
-            'LRSEe5zHb1aq20Hr9te2sQF8sLReSkO8bS1eD/9LDM8',
-            \base64_decode('f2mTaH9vkZZQyF7SxVeXDlOSDbVwjUzhdXv2T/YYO8k='),
-            \base64_decode('7v/CdiGoEI7bcj7R2EyDPH5nrCd2+7rHYNACB+Kf2FMx405und2KenGjNpCBPv0jOiptfHJHiY3lldAQTGCdqw=='),
-            \strtotime('+4 hours')
-        );
-    }
-    
-    protected function getUserFromToken(Token $token)
-    {
-        return [
-            'id' => 1
-        ];
-    }
-
-    protected function getRequestBody(ServerRequestInterface $request) : string
-    {
-        // Return the raw requestbody
-        return $request->getBody()->getContents();
-    }
-}
+use WildWolf\Psr16MemoryCache;
 
 final class AuthenticationTest extends AbstractTest
 {
@@ -54,7 +32,7 @@ final class AuthenticationTest extends AbstractTest
             $auth = new Authorization($params[0], $params[1], $this->token, new DateTime, $params[2]);
             $response = Dispatcher::run(
                 [
-                    new MockAuthentication,
+                    new Authentication,
                     function ($request, $next) {
                         $this->assertInstanceOf('\ncryptf\Token', $request->getAttribute('ncryptf-token'));
                         $this->assertEquals(true, \is_array($request->getAttribute('ncryptf-user')));
@@ -63,15 +41,64 @@ final class AuthenticationTest extends AbstractTest
                 ],
                 Factory::createServerRequest($params[0], $params[1])
                     ->withHeader('Authorization', $auth->getHeader())
+                    ->withHeader('Content-Type', 'application/json')
+                    ->withHeader('Accept', 'application/json')
                     ->withBody((function () use ($params) {
                         $stream = fopen('php://memory', 'r+');
                         fwrite($stream, \is_array($params[2]) ? \json_encode($params[2]): $params[2]);
                         rewind($stream);
-                        
                         return new \Zend\Diactoros\Stream($stream);
                     })())
             );
-    
+
+            $this->assertSame(200, $response->getStatusCode());
+        }
+    }
+
+    public function testEncryptedRequestWithPlaintextResponse()
+    {
+        foreach ($this->testCases as $k => $params) {
+            $serverKey = EncryptionKey::generate();
+            $myKey = EncryptionKey::generate();
+            $cache = Psr16MemoryCache::instance();
+            $cache->set($serverKey->getHashIdentifier(), $serverKey);
+
+            $auth = new Authorization($params[0], $params[1], $this->token, new DateTime, $params[2]);
+
+            $response = Dispatcher::run(
+                [
+                    new NcryptfPayload($cache),
+                    new Authentication,
+                    function ($request, $next) {
+                        $this->assertInstanceOf('\ncryptf\Token', $request->getAttribute('ncryptf-token'));
+                        $this->assertEquals(true, \is_array($request->getAttribute('ncryptf-user')));
+                        return $next->handle($request);
+                    }
+                ],
+                Factory::createServerRequest($params[0], $params[1])
+                    ->withHeader('Authorization', $auth->getHeader())
+                    ->withHeader('Content-Type', 'application/vnd.ncryptf+json')
+                    ->withHeader('Accept', 'application/json')
+                    ->withHeader('X-HashId', $serverKey->getHashIdentifier())
+                    ->withBody((function () use ($params, $serverKey, $myKey) {
+                        $data = \is_array($params[2]) ? \json_encode($params[2]): $params[2];
+
+                        $request = new Request(
+                            $myKey->getBoxSecretKey(),
+                            $myKey->getSigningSecretKey()
+                        );
+
+                        $encryptedData = $request->encrypt(
+                            $data,
+                            $serverKey->getBoxPublicKey()
+                        );
+                        $stream = fopen('php://memory', 'r+');
+                        fwrite($stream, $data === '' ? '' : \base64_encode($encryptedData));
+                        rewind($stream);
+                        return new \Zend\Diactoros\Stream($stream);
+                    })())
+            );
+
             $this->assertSame(200, $response->getStatusCode());
         }
     }
@@ -81,10 +108,12 @@ final class AuthenticationTest extends AbstractTest
         $auth = new Authorization('GET', '/api/v1/user/index', $this->token, new DateTime, '{"foo":"bar"}');
         $response = Dispatcher::run(
             [
-                new MockAuthentication
+                new Authentication
             ],
             Factory::createServerRequest('GET', '/api/v1/user/index')
                 ->withHeader('Authorization', $auth->getHeader())
+                ->withHeader('Content-Type', 'application/json')
+                ->withHeader('Accept', 'application/json')
         );
 
         $this->assertSame(401, $response->getStatusCode());

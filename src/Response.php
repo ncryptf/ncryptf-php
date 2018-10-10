@@ -63,7 +63,7 @@ class Response
             if ($checksum !== \sodium_crypto_generichash($payload, $nonce, 64)) {
                 throw new InvalidChecksumException("Calculated checksum differs from the checksum associated with the message.");
             }
-            
+
             $publicKey = \substr($response, 28, 32);
             $signature = \substr($payload, -64);
             $payload = \substr($payload, 0, -64);
@@ -90,7 +90,7 @@ class Response
         if (\strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
             throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
         }
-        
+
         return $this->decryptBody($response, $publicKey, $nonce);
     }
 
@@ -132,7 +132,7 @@ class Response
             )) {
                 return $result;
             }
-            
+
             throw new DecryptionFailedException;
         } catch (SodiumException $e) {
             throw new InvalidArgumentException($e->getMessage());

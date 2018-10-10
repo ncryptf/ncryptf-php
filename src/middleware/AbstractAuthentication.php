@@ -8,6 +8,8 @@ use Exception;
 use ncryptf\Authorization;
 use ncryptf\Token;
 
+use Middlewares\Utils\HttpErrorException;
+
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -23,10 +25,10 @@ abstract class AbstractAuthentication implements MiddlewareInterface
 
     // The date header
     const DATE_HEADER = 'X-DATE';
-    
+
     // The authorization header
     const AUTHORIZATION_HEADER = 'Authorization';
-    
+
     // The amount of the seconds the request is permitted to differ from the server time
     const DRIFT_TIME_ALLOWANCE = 90;
 
@@ -46,7 +48,7 @@ abstract class AbstractAuthentication implements MiddlewareInterface
             if ($token = $this->getTokenFromAccessToken($params['access_token'])) {
                 try {
                     $date = new DateTime($params['date'] ?? $request->getHeaderLine(self::DATE_HEADER));
-                    
+
                     $auth = new Authorization(
                         $request->getMethod(),
                         $this->getRequestUri($request),
@@ -59,20 +61,24 @@ abstract class AbstractAuthentication implements MiddlewareInterface
 
                     if ($auth->verify(\base64_decode($params['hmac']), $auth, static::DRIFT_TIME_ALLOWANCE)) {
                         return $handler->handle(
-                            $request
-                                ->withAttribute('ncryptf-token', $token)
+                            $request->withAttribute('ncryptf-token', $token)
                                 ->withAttribute('ncryptf-user', $this->getUserFromToken($token))
                         );
                     }
                 } catch (Exception $e) {
-                    throw $e;
+                    throw HttpErrorException::create(401, [], $e);
                 }
             }
         }
 
-        return $this->createResponse(401);
+        throw HttpErrorException::create(401);
     }
 
+    /**
+     * Returns the full URI
+     * @param ServerRequestInterface $request
+     * @return string
+     */
     private function getRequestUri(ServerRequestInterface $request) : string
     {
         $uri = $request->getUri()->getPath();
@@ -86,6 +92,21 @@ abstract class AbstractAuthentication implements MiddlewareInterface
     }
 
     /**
+     * Returns the plaintext request body.
+     *
+     * @param ServerRequestInterface $request
+     * @return string
+     */
+    protected function getRequestBody(ServerRequestInterface $request) : string
+    {
+        if ($decryptedBody = $request->getAttribute('ncryptf-decrypted-body', false)) {
+            return $decryptedBody;
+        }
+
+        return $request->getBody()->getContents();
+    }
+
+    /**
      * Returns the \ncryptf\Token associated to the given access token.
      * If the access token is not found, `NULL` should be returned
      *
@@ -93,17 +114,6 @@ abstract class AbstractAuthentication implements MiddlewareInterface
      * @return \ncryptf\Token
      */
     abstract protected function getTokenFromAccessToken(string $accessToken) :? Token;
-
-    /**
-     * Returns the plaintext request body. If the request is encrypted with vnd.ncryptf+<type>
-     * It should return the decrypted plaintext.
-     *
-     * If the request body is empty, an empty string `""` should be returned.
-     *
-     * @param ServerRequestInterface $request
-     * @return string
-     */
-    abstract protected function getRequestBody(ServerRequestInterface $request) : string;
 
     /**
      * Given a particular token, returns an object, array, or integer representing the user
