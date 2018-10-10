@@ -8,7 +8,6 @@ use ncryptf\Response;
 use ncryptf\middleware\EncryptionKeyInterface;
 
 use Middlewares\JsonPayload;
-use Middlewares\Utils\HttpErrorException;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -63,10 +62,11 @@ final class NcryptfPayload extends JsonPayload implements MiddlewareInterface
                     $body = $this->decryptRequest($key, $request, $rawBody, $version);
                     $request = $request->withParsedBody(\json_decode($body, true, $this->options))
                         ->withAttribute('ncryptf-decrypted-body', $body)
-                        ->withAttribute('ncryptf-version', $version);
+                        ->withAttribute('ncryptf-version', $version)
+                        ->withAttribute('ncryptf-request-public-key', Response::getPublicKeyFromResponse($rawBody));
                 }
             } catch (DecryptionFailedException | InvalidArgumentException | InvalidSignatureException | InvalidChecksumException | Exception $e) {
-                throw HttpErrorException::create(400, [], $e);
+                return $this->createResponse(400);
             }
         }
 

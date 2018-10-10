@@ -115,7 +115,7 @@ final class AuthenticationTest extends AbstractTest
                 ->withHeader('Content-Type', 'application/json')
                 ->withHeader('Accept', 'application/json')
         );
-
+        
         $this->assertSame(401, $response->getStatusCode());
     }
 }

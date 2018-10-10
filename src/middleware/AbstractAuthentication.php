@@ -8,8 +8,6 @@ use Exception;
 use ncryptf\Authorization;
 use ncryptf\Token;
 
-use Middlewares\Utils\HttpErrorException;
-
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -66,12 +64,12 @@ abstract class AbstractAuthentication implements MiddlewareInterface
                         );
                     }
                 } catch (Exception $e) {
-                    throw HttpErrorException::create(401, [], $e);
+                    return $this->createResponse(401);
                 }
             }
         }
 
-        throw HttpErrorException::create(401);
+        return $this->createResponse(401);
     }
 
     /**
