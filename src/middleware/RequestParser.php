@@ -5,19 +5,20 @@ namespace ncryptf\middleware;
 use Exception;
 
 use ncryptf\Response;
-use ncryptf\middleware\EncryptionKeyInterface;
 
-use Middlewares\JsonPayload;
 use Psr\SimpleCache\CacheInterface;
-use Psr\SimpleCache\InvalidArgumentException;
-
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
+
+use Psr\Http\Server\MiddlewareInterface;
+use Fig\Http\Message\StatusCodeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
-final class NcryptfPayload extends JsonPayload implements MiddlewareInterface
+use ncryptf\middleware\EncryptionKeyInterface;
+
+final class RequestParser implements MiddlewareInterface
 {
     /**
      * @var array $contentType
@@ -26,12 +27,6 @@ final class NcryptfPayload extends JsonPayload implements MiddlewareInterface
         'application/vnd.25519+json',
         'application/vnd.ncryptf+json'
     ];
-
-    /**
-     * @var int $options
-     * JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION
-     */
-    private $options = 1344;
 
     /**
      * Constructor
@@ -60,13 +55,14 @@ final class NcryptfPayload extends JsonPayload implements MiddlewareInterface
                     $key = $this->getEncryptionKey($request);
 
                     $body = $this->decryptRequest($key, $request, $rawBody, $version);
-                    $request = $request->withParsedBody(\json_decode($body, true, $this->options))
+                    $request = $request->withParsedBody(\json_decode($body, true, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION))
                         ->withAttribute('ncryptf-decrypted-body', $body)
                         ->withAttribute('ncryptf-version', $version)
-                        ->withAttribute('ncryptf-request-public-key', Response::getPublicKeyFromResponse($rawBody));
+                        ->withAttribute('ncryptf-request-public-key', $version === 2 ? Response::getPublicKeyFromResponse($rawBody) : $request->getHeaderLine('x-pubkey'));
                 }
             } catch (DecryptionFailedException | InvalidArgumentException | InvalidSignatureException | InvalidChecksumException | Exception $e) {
-                return $this->createResponse(400);
+                return $handler->handle($request)
+                        ->withStatus(401);
             }
         }
 
@@ -92,13 +88,14 @@ final class NcryptfPayload extends JsonPayload implements MiddlewareInterface
         );
 
         if ($version === 1) {
-            if (!$request->hasHeader('x-pubkey') || !$equest->hasHeader('x-nonce')) {
+            if (!$request->hasHeader('x-pubkey') || !$request->hasHeader('x-nonce')) {
                 throw new Exception('Missing nonce or public key header. Unable to decrypt response.');
             }
 
             $publicKey = \base64_decode($request->getHeaderLine('x-pubkey'));
             $nonce = \base64_decode($request->getHeaderLine('x-nonce'));
         }
+
         $decryptedRequest = $response->decrypt(
             $rawBody,
             $publicKey,

@@ -5,12 +5,14 @@ namespace ncryptf\middleware;
 use DateTime;
 use Exception;
 
-use ncryptf\Authorization;
 use ncryptf\Token;
+use ncryptf\Authorization;
 
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Fig\Http\Message\StatusCodeInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
@@ -64,12 +66,14 @@ abstract class AbstractAuthentication implements MiddlewareInterface
                         );
                     }
                 } catch (Exception $e) {
-                    return $this->createResponse(401);
+                    return $handler->handle($request)
+                        ->withStatus(401);
                 }
             }
         }
 
-        return $this->createResponse(401);
+        return $handler->handle($request)
+            ->withStatus(401);
     }
 
     /**

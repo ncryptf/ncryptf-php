@@ -2,12 +2,12 @@
 
 namespace ncryptf;
 
-use ncryptf\exceptions\DecryptionFailedException;
-use ncryptf\exceptions\InvalidChecksumException;
-use ncryptf\exceptions\InvalidSignatureException;
 use Exception;
-use InvalidArgumentException;
 use SodiumException;
+use InvalidArgumentException;
+use ncryptf\exceptions\InvalidChecksumException;
+use ncryptf\exceptions\DecryptionFailedException;
+use ncryptf\exceptions\InvalidSignatureException;
 
 class Response
 {
@@ -158,7 +158,7 @@ class Response
         if (\strlen($signature) !== 64) {
             throw new InvalidArgumentException(sprintf("Signature %d bytes.", 64));
         }
-        
+
         try {
             return \sodium_crypto_sign_verify_detached(
                 $signature,
@@ -183,7 +183,7 @@ class Response
             if (\strlen($response) < 236) {
                 throw new InvalidArgumentException;
             }
-            
+
             return \substr($response, 28, 32);
         }
 

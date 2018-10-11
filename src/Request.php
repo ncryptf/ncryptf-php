@@ -3,9 +3,9 @@
 namespace ncryptf;
 
 use ncryptf\Keypair;
-use ncryptf\exceptions\EncryptionFailedException;
-use InvalidArgumentException;
 use SodiumException;
+use InvalidArgumentException;
+use ncryptf\exceptions\EncryptionFailedException;
 
 final class Request
 {

@@ -76,7 +76,7 @@ JSON;
         $cipher = $request->encrypt($this->payload, \base64_decode($this->serverKeyPair['public']), 1, \base64_decode($this->nonce));
 
         $signature = $request->sign($this->payload);
-        
+
         $this->assertEquals($this->expectedCipher, \base64_encode($cipher));
         $this->assertEquals($this->expectedSignature, \base64_encode($signature));
 

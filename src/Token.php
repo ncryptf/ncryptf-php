@@ -64,7 +64,7 @@ final class Token
         if (\strlen($signature) !== 64) {
             throw new InvalidArgumentException(sprintf("Signature secret key should be %d bytes.", 64));
         }
-        
+
         $this->signature = $signature;
         $this->expiresAt = $expiresAt;
     }

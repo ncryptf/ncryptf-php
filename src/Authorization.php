@@ -3,8 +3,8 @@
 namespace ncryptf;
 
 use DateTime;
-use ncryptf\Signature;
 use ncryptf\Token;
+use ncryptf\Signature;
 
 final class Authorization
 {
@@ -199,7 +199,7 @@ final class Authorization
 
             return "HMAC {$data}";
         }
-        
+
         // The version 1 HMAC is returned by default
         return "HMAC {$this->token->accessToken},{$hmac},{$salt}";
     }
