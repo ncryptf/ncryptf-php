@@ -31,28 +31,16 @@ interface EncryptionKeyInterface
     public function getBoxKeyPair() : Keypair;
 
     /**
-     * Returns the signing public key
-     * @return string
-     */
-    public function getSigningPublicKey() : string;
-
-    /**
-     * Returns the signing secret key
-     * @return string
-     */
-    public function getSigningSecretKey() : string;
-
-    /**
-     * Returns the signing keypair
-     * @return string
-     */
-    public function getSigningKeyPair() : Keypair;
-
-    /**
      * Returns true if the key is ephemeral
      * @return boolean
      */
     public function isEphemeral() : bool;
+
+    /**
+     * Returns the public key expiration time represented as a unix timestamp
+     * @return int
+     */
+    public function getPublicKeyExpiration() : int;
 
     /**
      * Generates a new EncryptionKeyInterface

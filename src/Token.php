@@ -70,6 +70,15 @@ final class Token
     }
 
     /**
+     * Extracts the signature public key from the request
+     * @return string
+     */
+    public function getSignaturePublicKey()
+    {
+        return sodium_crypto_sign_publickey_from_secretkey($this->signature);
+    }
+
+    /**
      * Returns true if the token is expired
      *
      * @return boolean

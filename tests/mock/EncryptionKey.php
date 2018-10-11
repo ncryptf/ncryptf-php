@@ -32,24 +32,14 @@ final class EncryptionKey implements EncryptionKeyInterface
         return $this->key;
     }
 
-    public function getSigningPublicKey() : string
-    {
-        return $this->signingKey->getPublicKey();
-    }
-
-    public function getSigningSecretKey() : string
-    {
-        return $this->signingKey->getSecretKey();
-    }
-
-    public function getSigningKeyPair() : Keypair
-    {
-        return $this->signingKey;
-    }
-
     public function isEphemeral() : bool
     {
         return false;
+    }
+
+    public function getPublicKeyExpiration() : int
+    {
+        return \time();
     }
 
     public static function generate($ephemeral = false) : EncryptionKeyInterface

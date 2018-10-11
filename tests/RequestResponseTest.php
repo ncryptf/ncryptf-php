@@ -66,6 +66,24 @@ JSON;
         $this->assertEquals($this->payload, $plain);
     }
 
+    public function testDecryptEmptyString()
+    {
+        $request = new Request(
+            \base64_decode($this->clientKeyPair['secret']),
+            \base64_decode($this->signatureKeyPair['secret'])
+        );
+
+        $cipher = $request->encrypt('', \base64_decode($this->serverKeyPair['public']));
+
+        $response = new Response(
+            \base64_decode($this->serverKeyPair['secret'])
+        );
+
+        $plain = $response->decrypt($cipher);
+
+        $this->assertEquals('', $plain);
+    }
+
     public function testv1EncryptDecrypt()
     {
         $request = new Request(

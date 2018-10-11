@@ -46,7 +46,6 @@ class Response
      */
     public function decrypt(string $response, string $publicKey = null, string $nonce = null) : string
     {
-
         $version = static::getVersion($response);
         if ($version === 2) {
             if (\strlen($response) < 236) {
@@ -72,7 +71,7 @@ class Response
             $body = \substr($payload, 60, \strlen($payload));
 
             $decryptedPayload = $this->decryptBody($body, $publicKey, $nonce);
-            if (!$decryptedPayload) {
+            if ($decryptedPayload === false) {
                 throw new DecryptionFailedException('An unexpected error occurred when decrypting the message.');
             }
 
@@ -125,11 +124,13 @@ class Response
                 $publicKey
             );
 
-            if ($result = \sodium_crypto_box_open(
+            $result = \sodium_crypto_box_open(
                 $response,
                 $nonce,
                 $keypair->getSodiumKeypair()
-            )) {
+            );
+
+            if ($result !== false) {
                 return $result;
             }
 

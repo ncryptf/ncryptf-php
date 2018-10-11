@@ -48,17 +48,19 @@ final class RequestParser implements MiddlewareInterface
             try {
                 $rawBody = \base64_decode($request->getBody()->getContents());
                 if ($rawBody === '') {
-                    $request = $request->withParsedBody([]);
-                    $request->withAttribute('ncryptf-decrypted-body', '');
+                    $request = $request->withParsedBody([])
+                        ->withAttribute('ncryptf-decrypted-body', '')
+                        ->withAttribute('ncryptf-version', 2)
+                        ->withAttribute('ncryptf-request-public-key', \base64_decode($request->getHeaderLine('x-pubkey')));
                 } else {
                     $version = Response::getVersion($rawBody);
                     $key = $this->getEncryptionKey($request);
 
                     $body = $this->decryptRequest($key, $request, $rawBody, $version);
-                    $request = $request->withParsedBody(\json_decode($body, true, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION))
+                    $request = $request->withParsedBody(\json_decode($body, true))
                         ->withAttribute('ncryptf-decrypted-body', $body)
                         ->withAttribute('ncryptf-version', $version)
-                        ->withAttribute('ncryptf-request-public-key', $version === 2 ? Response::getPublicKeyFromResponse($rawBody) : $request->getHeaderLine('x-pubkey'));
+                        ->withAttribute('ncryptf-request-public-key', $version === 2 ? Response::getPublicKeyFromResponse($rawBody) : \base64_decode($request->getHeaderLine('x-pubkey')));
                 }
             } catch (DecryptionFailedException | InvalidArgumentException | InvalidSignatureException | InvalidChecksumException | Exception $e) {
                 return $handler->handle($request)
@@ -66,6 +68,8 @@ final class RequestParser implements MiddlewareInterface
             }
         }
 
+        // Only attempt to process this request if it is a vnd.25519+json or vnd.ncryptf+json request
+        // Otherwise, continue with normal processing
         return $handler->handle($request);
     }
 
@@ -132,12 +136,14 @@ final class RequestParser implements MiddlewareInterface
 
     /**
      * Check whether the request payload need to be processed
+     * @param ServerRequestInterface $request
+     * @return bool
      */
     private function checkRequest(ServerRequestInterface $request): bool
     {
         $contentType = $request->getHeaderLine('Content-Type');
         foreach ($this->contentType as $allowedType) {
-            if (stripos($contentType, $allowedType) === 0) {
+            if (\stripos($contentType, $allowedType) === 0) {
                 return true;
             }
         }
