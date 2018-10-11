@@ -163,7 +163,7 @@ JSON;
                     ->withHeader('X-PubKey', \base64_encode($myKey->getBoxPublicKey()))
                     ->withBody((function () use ($params, $serverKey, $myKey, $token) {
                         $data = \is_array($params[2]) ? \json_encode($params[2]): $params[2];
- 
+
                         if (!empty($params[2])) {
                             $request = new Request(
                                 $myKey->getBoxSecretKey(),
