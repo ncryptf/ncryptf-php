@@ -6,6 +6,7 @@ use Exception;
 
 use ncryptf\Request;
 
+use Psr\SimpleCache\CacheInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -14,6 +15,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Fig\Http\Message\StatusCodeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 use ncryptf\middleware\EncryptionKeyInterface;
 
@@ -27,6 +29,11 @@ final class ResponseFormatter implements MiddlewareInterface
     protected $key;
 
     /**
+     * @var CacheInterface $cache
+     */
+    protected $cache;
+
+    /**
      * @var array $contentType
      */
     protected $contentType = [
@@ -38,8 +45,9 @@ final class ResponseFormatter implements MiddlewareInterface
      * Constructor
      * @param EncryptionKeyInterface $key
      */
-    public function __construct(EncryptionKeyInterface $key)
+    public function __construct(CacheInterface $cache, EncryptionKeyInterface $key)
     {
+        $this->cache = $cache;
         $this->key = $key;
     }
 
@@ -66,6 +74,8 @@ final class ResponseFormatter implements MiddlewareInterface
             $stream = $response->getBody();
             $class = $this->key;
             $key = $class::generate();
+            
+            $this->cache->set($key->getHashIdentifier(), $key);
 
             $r = new Request(
                 $key->getBoxSecretKey(),

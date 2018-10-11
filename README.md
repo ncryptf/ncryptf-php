@@ -274,9 +274,13 @@ The version 2 payload is described as follows. Each component is concatanated to
 
 ## PSR-15 Middleware
 
+### Authentication
+
 Ncryptf supports a PSR-15 middleware via `ncryptf\middleware\AbstractAuthentication`, which simply needs to be extended for token extraction and user retrieval.
 
 ```php
+use ncryptf\middleware\AbstractAuthentication;
+
 final class Authentication extends AbstractAuthentication
 {
     /**
@@ -287,7 +291,7 @@ final class Authentication extends AbstractAuthentication
         // Search for token in database
         return \ncryptf\Token(...);
     }
-    
+
     protected function getUserFromToken(Token $token)
     {
         // Convert a token to a user.
@@ -295,20 +299,15 @@ final class Authentication extends AbstractAuthentication
             ->where(['access_token' => $token['access_token']])
             ->one();
     }
-
-    protected function getRequestBody(ServerRequestInterface $request) : string
-    {
-        // Return the raw requestbody
-        // If the request is encrypted with ncryptf, you'll need to decrypt it before hand and return it
-        // This library cannot provide this out-of-the-box as it requires knowledge of your encryption key keystore
-        return $request->getBody()->getContents();
-    }
 }
 ```
 
 A simple example is shown as follows:
 
 ```php
+use Authentication;
+use Middlewares\Utils\Dispatcher;
+
 $response = Dispatcher::run([
     new Authentication,
     function ($request, $next) {
@@ -318,3 +317,65 @@ $response = Dispatcher::run([
     }
 ], $request);
 ```
+
+### Secure Request Parsing
+
+A PSR-15 middleware is provided to decrypt requests encrypted with `application/vnd.ncryptf+json`. Request decrypting can be performed _independently_ of an authenticated requests and is useful in circumstances where sensative data needs to be transferred, however a HTTP 204, or a non metadata leaking response is returned.
+
+Ideally however, this would always be coupled with an authenticated requests and a corresponding encrypted response.
+
+In order to ensure messages can be decrypted, three components are required:
+
+1. A PSR-16 cache instance where your encryption keys are stored. This guide recommends using a distributed cache, such as Redis or memcache to facilitate long term storage.
+
+2. A `ncryptf\middleware\EncryptionKeyInterface` class that represents a cachable encryption key.
+
+3. Injection of `ncryptf\middleware\RequestParser` at the beginning of your dispatcher, before the request body is acted upon.
+
+```php
+use ncryptf\middleware\RequestParser;
+use Middlewares\Utils\Dispatcher;
+
+$PSR16CacheInterface = new class implements \Psr\SimpleCache\CacheInterface {};
+
+$response = Dispatcher::run([
+    new RequestParser($PSR16CacheInterface),
+    function ($request, $next) {
+        // This is the plain-text decrypted body
+        $decryptedBody = $request->getAttribute('ncryptf-decrypted-body');
+
+        // The parsed body
+        $params = $request->getParsedBody();
+        return $next->handle($request);
+    }
+], $request);
+```
+
+### Secure Response Formatting
+
+When coupled with an authenticated ncryptf request, `ncryptf\middleware\ResponseFormatter` can format a given response into an `application/vnd.ncryptf+json` response. The formatter currently can only process JSON payloads.
+
+This implementation must be used with an instance of `ncryptf\middleware\AbstractAuthentication`, and is recommended to be used with secure requests processed by `ncryptf\middleware\RequestParser` to ensure full end-to-end encryption of messages.
+
+The `ncryptf\middleware\ResponseFormatter` constructor takes an instance of `Psr\SimpleCache\CacheInterface` to store the newly generate `ncryptf\middleware\EncryptionKeyInterface`, and an instance of `ncryptf\middleware\EncryptionKeyInterface` to construct a new keypair to ensure perfect-forward secrecy.
+
+```php
+use Authentication;
+use ncryptf\middleware\EncryptionKeyInterface;
+use ncryptf\middleware\ResponseFormatter;
+use ncryptf\middleware\RequestParser;
+use Middlewares\Utils\Dispatcher;
+
+$PSR16CacheInterface = new class implements \Psr\SimpleCache\CacheInterface {};
+
+$response = Dispatcher::run([
+    new RequestParser($PSR16CacheInterface),
+    new Authentication,
+    new ResponseFormatter($PSR16CacheInterface, $EncryptionKeyInterface)
+    function ($request, $next) {
+        return new JsonResponse(['hello' => 'world'])
+    }
+], $request);
+```
+
+> Refer to the `tests` directory for full end-to-end implementation examples.
