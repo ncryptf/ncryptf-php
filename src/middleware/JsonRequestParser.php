@@ -24,6 +24,8 @@ use ncryptf\middleware\EncryptionKeyInterface;
 
 final class JsonRequestParser implements MiddlewareInterface
 {
+    use \Middlewares\Utils\Traits\HasResponseFactory;
+    
     /**
      * @var CacheInterface $cache
      */

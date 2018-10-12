@@ -375,4 +375,34 @@ final class IntegrationTest extends TestCase
         // Expect a 401 because the signature verification failed
         $this->assertSame(401, $curl->errorCode);
     }
+
+    /**
+     * Verifies that an encrypted request that is malformed receives an HTTP 200
+     * @depends testEphemeralKeyBootstrap
+     * @return void
+     */
+    public function testMalformedEncryptedRequest(array $stack)
+    {
+        $curl = new Curl;
+        $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
+        $curl->setHeader('Accept', 'application/json');
+        $curl->setHeader('X-HashId', $stack['hash-id']);
+        
+        $request = new Request(
+            $this->key->getSecretKey(),
+            Utils::generateSigningKeypair()->getSecretKey()
+        );
+        
+        // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
+        $payload = \json_encode(['hello' => 'world'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
+        $encryptedPayload = $request->encrypt(
+            $payload,
+            $stack['key']
+        );
+
+        // Emulate a tampered string by replacing 32 bytes of the encrypted payload with something random
+        $curl->post("{$this->url}/echo", \base64_encode(\substr_replace($encryptedPayload, \random_bytes(32), 60, 32)));
+
+        $this->assertSame(400, $curl->errorCode);
+    }
 }

@@ -60,7 +60,7 @@ abstract class AbstractAuthentication implements MiddlewareInterface
                     if ($auth->verify(\base64_decode($params['hmac']), $auth, static::DRIFT_TIME_ALLOWANCE)) {
                         // For encrypted requests, we perform an additional integrity check by verifying the public key
                         // used to sign the message matches the key issued by this instance
-                        if (($contentType = $request->getHeaderLine('Content-Type')) === 'application/vnd.ncryptf+json') {
+                        if ($request->getHeaderLine('Content-Type') === 'application/vnd.ncryptf+json') {
                             $rawBody = (string)$request->getBody();
                             if ($rawBody !== '' && Response::getVersion(\base64_decode($rawBody)) >= 2) {
                                 $publicKey = Response::getSigningPublicKeyFromResponse(\base64_decode($rawBody));
