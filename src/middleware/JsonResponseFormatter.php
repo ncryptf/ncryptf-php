@@ -42,12 +42,18 @@ final class JsonResponseFormatter implements MiddlewareInterface
 
     /**
      * Constructor
-     * @param EncryptionKeyInterface $key
+     * @param CacheInterface $cache
+     * @param EncryptionKeyInterface $class
      */
-    public function __construct(CacheInterface $cache, EncryptionKeyInterface $key)
+    public function __construct(CacheInterface $cache, string $class)
     {
         $this->cache = $cache;
-        $this->key = $key;
+        $interface = new $class;
+        if (!($interface instanceof EncryptionKeyInterface)) {
+            throw new Exception('The class name provided is not an instance of EncryptionKeyInterface');
+        }
+
+        $this->key = $interface;
     }
 
     /**
@@ -71,7 +77,10 @@ final class JsonResponseFormatter implements MiddlewareInterface
             $class = $this->key;
             $key = $class::generate();
             
-            $this->cache->set($key->getHashIdentifier(), $key);
+            $this->cache->set(
+                $key->getHashIdentifier(),
+                \function_exists('igbinary_serialize') ? \igbinary_serialize($key) : \serialize($key)
+            );
 
             $r = new Request(
                 $key->getBoxSecretKey(),
@@ -88,7 +97,6 @@ final class JsonResponseFormatter implements MiddlewareInterface
             if ($version === 1) {
                 $response = $response->withHeader('x-sigpubkey', \base64_encode($token === null ? $key->getSignPublicKey() : $token->getSignaturePublicKey()))
                     ->withHeader('x-signature', \base64_encode($r->sign((string)$stream)))
-                    ->withHeader('x-public-key-expiration', $key->getPublicKeyExpiration())
                     ->withHeader('x-nonce', \base64_encode($r->getNonce()))
                     ->withHeader('x-pubkey', \base64_encode($key->getBoxPublicKey()));
             }
@@ -97,7 +105,8 @@ final class JsonResponseFormatter implements MiddlewareInterface
             $stream->write(\base64_encode($content));
             return $response->withBody($stream)
                 ->withHeader('Content-Type', 'application/vnd.ncryptf+json')
-                ->withHeader('x-hashid', \base64_encode($key->getHashIdentifier()));
+                ->withHeader('x-public-key-expiration', $key->getPublicKeyExpiration())
+                ->withHeader('x-hashid', $key->getHashIdentifier());
         }
 
         return $handler->handle($request)

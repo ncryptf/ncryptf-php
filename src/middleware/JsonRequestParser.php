@@ -75,7 +75,7 @@ final class JsonRequestParser implements MiddlewareInterface
                             throw new Exception('Signing key mismatch.');
                         }
                     }
-                    
+
                     $request = $request->withParsedBody(\json_decode($body, true))
                         ->withAttribute('ncryptf-decrypted-body', $body)
                         ->withAttribute('ncryptf-version', $version)
@@ -112,6 +112,8 @@ final class JsonRequestParser implements MiddlewareInterface
 
         if ($version === 1) {
             if (!$request->hasHeader('x-pubkey') || !$request->hasHeader('x-nonce')) {
+                var_dump($version);
+                die();
                 throw new Exception('Missing nonce or public key header. Unable to decrypt response.');
             }
 
@@ -147,7 +149,17 @@ final class JsonRequestParser implements MiddlewareInterface
         $hashKey = $request->getHeaderLine('x-hashid');
 
         try {
-            return $this->cache->get($hashKey);
+            $result = $this->cache->get($hashKey);
+
+            if (!$result) {
+                throw new Exception('Unable to extract key from cache.');
+            }
+
+            if (\function_exists('igbinary_unserialize')) {
+                return \igbinary_unserialize($result);
+            }
+
+            return \unserialize($result);
         } catch (InvalidArgumentException $e) {
             throw new Exception('Unable to decrypt request.', null, $e);
         }

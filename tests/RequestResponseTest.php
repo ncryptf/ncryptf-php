@@ -136,7 +136,7 @@ JSON;
             $serverKey = EncryptionKey::generate();
             $myKey = EncryptionKey::generate();
             $cache = Psr16MemoryCache::instance();
-            $cache->set($serverKey->getHashIdentifier(), $serverKey);
+            $cache->set($serverKey->getHashIdentifier(), \function_exists('igbinary_serialize') ? \igbinary_serialize($serverKey) : \serialize($serverKey));
 
             $auth = new Authorization($params[0], $params[1], $this->token, new DateTime, $params[2]);
             $token = $this->token;
@@ -150,7 +150,7 @@ JSON;
                         $this->assertEquals(true, \is_array($request->getAttribute('ncryptf-user')));
                         return $next->handle($request);
                     },
-                    new JsonResponseFormatter($cache, new EncryptionKey),
+                    new JsonResponseFormatter($cache, EncryptionKey::class),
                     new EchoResponse,
                 ],
                 Factory::createServerRequest($params[0], $params[1])
@@ -201,7 +201,7 @@ JSON;
             $serverKey = EncryptionKey::generate();
             $myKey = EncryptionKey::generate();
             $cache = Psr16MemoryCache::instance();
-            $cache->set($serverKey->getHashIdentifier(), $serverKey);
+            $cache->set($serverKey->getHashIdentifier(), \function_exists('igbinary_serialize') ? \igbinary_serialize($serverKey) : \serialize($serverKey));
 
             $auth = new Authorization($params[0], $params[1], $this->token, new DateTime, $params[2]);
             $token = $this->token;
@@ -209,7 +209,7 @@ JSON;
             $response = Dispatcher::run(
                 [
                     new JsonRequestParser($cache),
-                    new JsonResponseFormatter($cache, new EncryptionKey),
+                    new JsonResponseFormatter($cache, EncryptionKey::class),
                     new EchoResponse,
                 ],
                 Factory::createServerRequest($params[0], $params[1])
@@ -261,7 +261,7 @@ JSON;
             $myKey = EncryptionKey::generate();
             $nonce = \random_bytes(24);
             $cache = Psr16MemoryCache::instance();
-            $cache->set($serverKey->getHashIdentifier(), $serverKey);
+            $cache->set($serverKey->getHashIdentifier(), \function_exists('igbinary_serialize') ? \igbinary_serialize($serverKey) : \serialize($serverKey));
 
             $auth = new Authorization($params[0], $params[1], $this->token, new DateTime, $params[2]);
             $token = $this->token;
@@ -274,7 +274,7 @@ JSON;
                         $this->assertEquals(true, \is_array($request->getAttribute('ncryptf-user')));
                         return $next->handle($request);
                     },
-                    new JsonResponseFormatter($cache, new EncryptionKey),
+                    new JsonResponseFormatter($cache, EncryptionKey::class),
                     new EchoResponse,
                 ],
                 Factory::createServerRequest($params[0], $params[1])
