@@ -15,7 +15,7 @@ final class AuthorizationTests extends AbstractTest
 
             $this->assertEquals($auth->getHeader(), $this->v1HMACHeaders[$k]);
             $hmac = \explode(',', $this->v1HMACHeaders[$k])[1];
-            $this->assertEquals($auth->verify($hmac, $auth, 90), false);
+            $this->assertEquals($auth->verify(\base64_decode($hmac), $auth, 90), false);
         }
     }
 
@@ -26,7 +26,7 @@ final class AuthorizationTests extends AbstractTest
 
             $this->assertEquals($auth->getHeader(), $this->v2HMACHeaders[$k]);
             $hmac = \json_decode(\base64_decode(\str_replace('HMAC ', '', $this->v2HMACHeaders[$k])), true)['hmac'];
-            $this->assertEquals($auth->verify($hmac, $auth, 90), false);
+            $this->assertEquals($auth->verify(\base64_decode($hmac), $auth, 90), false);
         }
     }
 

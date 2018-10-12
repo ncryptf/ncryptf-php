@@ -207,20 +207,24 @@ final class Authorization
     /**
      * Validates a provided HMAC against an auth object and a drift
      *
-     * @param string $hmac
-     * @param self $auth
+     * @param string $hmac  byte[] HMAC
+     * @param self $auth    Authorization object
      * @param integer $driftAllowance
      * @return boolean
      */
     public function verify(string $hmac, self $auth, int $driftAllowance = 90) : bool
     {
         $drift = $this->getTimeDrift($auth->getDate());
-        if ($drift === null && $drift >= $driftAllowance) {
+        if ($drift === null || $drift >= $driftAllowance) {
             return false;
         }
 
-        if (\sodium_memcmp($hmac, $auth->getHMAC()) === 0) {
-            return true;
+        try {
+            if (\sodium_memcmp($hmac, $auth->getHMAC()) === 0) {
+                return true;
+            }
+        } catch (\SodiumException $e) {
+            return false;
         }
 
         return false;
