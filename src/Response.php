@@ -86,7 +86,7 @@ class Response
             throw new InvalidArgumentException('Nonce is required to decrypt v1 requests.');
         }
 
-        if ($publicKey == null || \strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
+        if ($publicKey === null || \strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
             throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
         }
 
