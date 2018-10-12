@@ -7,7 +7,6 @@ use Exception;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use ncryptf\Authorization;
@@ -64,14 +63,12 @@ abstract class AbstractAuthentication implements MiddlewareInterface
                         );
                     }
                 } catch (Exception $e) {
-                    return $handler->handle($request)
-                        ->withStatus(401);
+                    return $this->createResponse(401);
                 }
             }
         }
 
-        return $handler->handle($request)
-            ->withStatus(401);
+        return $this->createResponse(401);
     }
 
     /**
