@@ -19,7 +19,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 use ncryptf\middleware\EncryptionKeyInterface;
 
-final class ResponseFormatter implements MiddlewareInterface
+final class JsonResponseFormatter implements MiddlewareInterface
 {
     const ENCODING_OPTIONS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION;
 
@@ -63,7 +63,8 @@ final class ResponseFormatter implements MiddlewareInterface
             $version = $request->getAttribute('ncryptf-version');
             $publicKey = $request->getAttribute('ncryptf-request-public-key');
             $token = $request->getAttribute('ncryptf-token');
-            if ($version === null || $publicKey === null || $token === null) {
+            
+            if ($version === null || $publicKey === null) {
                 return $response->withStatus(400, 'Unable to encrypt request.');
             }
 
@@ -79,7 +80,7 @@ final class ResponseFormatter implements MiddlewareInterface
 
             $r = new Request(
                 $key->getBoxSecretKey(),
-                $token->signature
+                $token === null ? $key->getSignSecretKey() : $token->signature
             );
 
             $content = $r->encrypt(
@@ -90,7 +91,7 @@ final class ResponseFormatter implements MiddlewareInterface
             );
 
             if ($version === 1) {
-                $response = $response->withHeader('x-sigpubkey', \base64_encode($token->getSignaturePublicKey()))
+                $response = $response->withHeader('x-sigpubkey', \base64_encode($token === null ? $key->getSignPublicKey() : $token->getSignaturePublicKey()))
                     ->withHeader('x-signature', \base64_encode($r->sign((string)$stream)))
                     ->withHeader('x-public-key-expiration', $key->getPublicKeyExpiration())
                     ->withHeader('x-nonce', \base64_encode($r->getNonce()))

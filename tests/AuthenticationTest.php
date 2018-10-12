@@ -19,7 +19,6 @@ use ncryptf\Tests\mock\EncryptionKey;
 use ncryptf\Tests\mock\Authentication;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use ncryptf\middleware\ResponseFormatter;
 use Zend\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;

@@ -4,6 +4,7 @@ namespace ncryptf\middleware;
 
 use Exception;
 
+use ncryptf\Token;
 use ncryptf\Response;
 
 use Psr\SimpleCache\CacheInterface;
@@ -18,7 +19,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 use ncryptf\middleware\EncryptionKeyInterface;
 
-final class RequestParser implements MiddlewareInterface
+final class JsonRequestParser implements MiddlewareInterface
 {
     /**
      * @var array $contentType
@@ -57,6 +58,16 @@ final class RequestParser implements MiddlewareInterface
                     $key = $this->getEncryptionKey($request);
 
                     $body = $this->decryptRequest($key, $request, $rawBody, $version);
+
+                    // If we're on V2 or greater of the request, and a token is defined, verify that the signature was signed by the user who issued the request
+                    if ($version >= 2 && $request->getAttribute('ncryptf-token') instanceof Token) {
+                        $token = $request->getAttribute('ncryptf-token');
+                        $publicKey = Response::getSigningPublicKeyFromResponse($rawBody);
+                        if (\sodium_compare($publicKey, $token->getSignaturePublicKey()) !== 0) {
+                            throw new Exception('Signing key mismatch.');
+                        }
+                    }
+                    
                     $request = $request->withParsedBody(\json_decode($body, true))
                         ->withAttribute('ncryptf-decrypted-body', $body)
                         ->withAttribute('ncryptf-version', $version)
@@ -64,7 +75,7 @@ final class RequestParser implements MiddlewareInterface
                 }
             } catch (DecryptionFailedException | InvalidArgumentException | InvalidSignatureException | InvalidChecksumException | Exception $e) {
                 return $handler->handle($request)
-                        ->withStatus(401);
+                        ->withStatus(400);
             }
         }
 

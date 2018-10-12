@@ -219,7 +219,7 @@ final class Authorization
             return false;
         }
 
-        if (\hash_equals($hmac, $auth->getHMAC())) {
+        if (\sodium_memcmp($hmac, $auth->getHMAC()) === 0) {
             return true;
         }
 

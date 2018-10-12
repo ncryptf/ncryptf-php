@@ -59,7 +59,7 @@ class Response
             $checksum = \substr($response, -64);
 
             // Verify the checksum to ensure the headers haven't been tampered with
-            if ($checksum !== \sodium_crypto_generichash($payload, $nonce, 64)) {
+            if (\sodium_memcmp($checksum, \sodium_crypto_generichash($payload, $nonce, 64)) !== 0) {
                 throw new InvalidChecksumException("Calculated checksum differs from the checksum associated with the message.");
             }
 
@@ -186,6 +186,27 @@ class Response
             }
 
             return \substr($response, 28, 32);
+        }
+
+        throw new InvalidArgumentException('The response provided is not suitable for public key extraction.');
+    }
+
+    /**
+     * Extracts the signing public key from a v2 response
+     *
+     * @param string $response
+     * @return string
+     */
+    public static function getSigningPublicKeyFromResponse(string $response) : string
+    {
+        $version = static::getVersion($response);
+        if ($version === 2) {
+            if (\strlen($response) < 236) {
+                throw new InvalidArgumentException;
+            }
+            
+            $payload = \substr($response, 0, \strlen($response) - 64);
+            return \substr($payload, -32);
         }
 
         throw new InvalidArgumentException('The response provided is not suitable for public key extraction.');

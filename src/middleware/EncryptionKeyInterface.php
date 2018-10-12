@@ -31,6 +31,24 @@ interface EncryptionKeyInterface
     public function getBoxKeyPair() : Keypair;
 
     /**
+     * Returns the binary signing public Key
+     * @return string
+     */
+    public function getSignPublicKey() : string;
+
+    /**
+     * Returns the binary signing secret key
+     * @return string
+     */
+    public function getSignSecretKey() : string;
+
+    /**
+     * Returns the Sodium KeyPair
+     * @return Keypair
+     */
+    public function getSignKeyPair() : Keypair;
+
+    /**
      * Returns true if the key is ephemeral
      * @return boolean
      */
