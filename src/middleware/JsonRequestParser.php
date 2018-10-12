@@ -112,8 +112,6 @@ final class JsonRequestParser implements MiddlewareInterface
 
         if ($version === 1) {
             if (!$request->hasHeader('x-pubkey') || !$request->hasHeader('x-nonce')) {
-                var_dump($version);
-                die();
                 throw new Exception('Missing nonce or public key header. Unable to decrypt response.');
             }
 

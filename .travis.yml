@@ -23,7 +23,7 @@ before_install:
   # Install dependencies
   - chmod a+x tests/.travis/install_dependencies.sh
   - bash tests/.travis/install_dependencies.sh
-  - pecl install libsodium-2.0.10
+  - if [[ ${TRAVIS_PHP_VERSION:0:3} == "7.1" ]]; then pecl install libsodium-2.0.12; fi
   - phpenv config-rm xdebug.ini || true
   - php -m
 
