@@ -67,10 +67,6 @@ final class JsonResponseFormatter implements MiddlewareInterface
                 return $response->withStatus(400, 'Unable to encrypt request.');
             }
 
-            if (!($response instanceof MessageInterface)) {
-                throw new Exception('Response does not implement MessageInterface.');
-            }
-
             $stream = $response->getBody();
             $class = $this->key;
             $key = $class::generate();

@@ -215,7 +215,7 @@ final class Authorization
     public function verify(string $hmac, self $auth, int $driftAllowance = 90) : bool
     {
         $drift = $this->getTimeDrift($auth->getDate());
-        if ($drift && $drift >= $driftAllowance) {
+        if ($drift === null && $drift >= $driftAllowance) {
             return false;
         }
 

@@ -71,9 +71,6 @@ class Response
             $body = \substr($payload, 60, \strlen($payload));
 
             $decryptedPayload = $this->decryptBody($body, $publicKey, $nonce);
-            if ($decryptedPayload === false) {
-                throw new DecryptionFailedException('An unexpected error occurred when decrypting the message.');
-            }
 
             if (!$this->isSignatureValid($decryptedPayload, $signature, $sigPubKey)) {
                 throw new InvalidSignatureException('The message signature is not valid.');
