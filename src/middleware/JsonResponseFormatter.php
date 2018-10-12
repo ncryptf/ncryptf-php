@@ -4,18 +4,17 @@ namespace ncryptf\middleware;
 
 use Exception;
 
-use ncryptf\Request;
-
-use Psr\SimpleCache\CacheInterface;
-use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\ResponseInterface;
 
-use Psr\Http\Server\MiddlewareInterface;
-use Fig\Http\Message\StatusCodeInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamInterface;
+use Psr\Http\Server\MiddlewareInterface;
+
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use ncryptf\Request;
 
 use ncryptf\middleware\EncryptionKeyInterface;
 

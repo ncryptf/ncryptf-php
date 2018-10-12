@@ -3,10 +3,10 @@
 namespace ncryptf;
 
 use Exception;
-use SodiumException;
 use InvalidArgumentException;
-use ncryptf\exceptions\InvalidChecksumException;
+use SodiumException;
 use ncryptf\exceptions\DecryptionFailedException;
+use ncryptf\exceptions\InvalidChecksumException;
 use ncryptf\exceptions\InvalidSignatureException;
 
 class Response
@@ -86,7 +86,7 @@ class Response
             throw new InvalidArgumentException('Nonce is required to decrypt v1 requests.');
         }
 
-        if (\strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
+        if ($publicKey == null || \strlen($publicKey) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) {
             throw new InvalidArgumentException(sprintf("Public key should be %d bytes.", SODIUM_CRYPTO_BOX_PUBLICKEYBYTES));
         }
 

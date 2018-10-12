@@ -2,8 +2,8 @@
 
 namespace ncryptf;
 
-use ncryptf\Keypair;
 use SodiumException;
+use ncryptf\Keypair;
 
 final class Utils
 {

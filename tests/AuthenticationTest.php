@@ -14,14 +14,13 @@ use PHPUnit\Framework\TestCase;
 
 use Middlewares\Utils\Dispatcher;
 use ncryptf\Tests\mock\EchoResponse;
-use ncryptf\middleware\RequestParser;
 use ncryptf\Tests\mock\EncryptionKey;
 use ncryptf\Tests\mock\Authentication;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use Zend\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Zend\Diactoros\Response\JsonResponse;
 
 final class AuthenticationTest extends AbstractTest
 {

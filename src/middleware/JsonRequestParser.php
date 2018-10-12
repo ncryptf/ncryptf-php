@@ -4,23 +4,31 @@ namespace ncryptf\middleware;
 
 use Exception;
 
-use ncryptf\Token;
-use ncryptf\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
+use Psr\Http\Message\StreamInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 use Psr\SimpleCache\CacheInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\ResponseInterface;
-
-use Psr\Http\Server\MiddlewareInterface;
-use Fig\Http\Message\StatusCodeInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use ncryptf\Response;
+
+use ncryptf\Token;
+use ncryptf\exceptions\DecryptionFailedException;
+use ncryptf\exceptions\InvalidChecksumException;
+use ncryptf\exceptions\InvalidSignatureException;
 
 use ncryptf\middleware\EncryptionKeyInterface;
 
 final class JsonRequestParser implements MiddlewareInterface
 {
+    /**
+     * @var CacheInterface $cache
+     */
+    protected $cache;
+
     /**
      * @var array $contentType
      */

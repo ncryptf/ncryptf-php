@@ -5,15 +5,13 @@ namespace ncryptf\middleware;
 use DateTime;
 use Exception;
 
-use ncryptf\Token;
-use ncryptf\Authorization;
-
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Fig\Http\Message\StatusCodeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use ncryptf\Authorization;
+use ncryptf\Token;
 
 /**
  * PSR-15 Authentication middleware for handling ncryptf Authorization requests

@@ -3,8 +3,8 @@
 namespace ncryptf;
 
 use DateTime;
-use ncryptf\Token;
 use ncryptf\Signature;
+use ncryptf\Token;
 
 final class Authorization
 {
