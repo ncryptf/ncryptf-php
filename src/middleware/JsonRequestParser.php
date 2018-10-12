@@ -67,23 +67,13 @@ final class JsonRequestParser implements MiddlewareInterface
 
                     $body = $this->decryptRequest($key, $request, $rawBody, $version);
 
-                    // If we're on V2 or greater of the request, and a token is defined, verify that the signature was signed by the user who issued the request
-                    if ($version >= 2 && $request->getAttribute('ncryptf-token') instanceof Token) {
-                        $token = $request->getAttribute('ncryptf-token');
-                        $publicKey = Response::getSigningPublicKeyFromResponse($rawBody);
-                        if (\sodium_compare($publicKey, $token->getSignaturePublicKey()) !== 0) {
-                            throw new Exception('Signing key mismatch.');
-                        }
-                    }
-
                     $request = $request->withParsedBody(\json_decode($body, true))
                         ->withAttribute('ncryptf-decrypted-body', $body)
                         ->withAttribute('ncryptf-version', $version)
                         ->withAttribute('ncryptf-request-public-key', $version === 2 ? Response::getPublicKeyFromResponse($rawBody) : \base64_decode($request->getHeaderLine('x-pubkey')));
                 }
             } catch (DecryptionFailedException | InvalidArgumentException | InvalidSignatureException | InvalidChecksumException | Exception $e) {
-                return $handler->handle($request)
-                        ->withStatus(400);
+                return $this->createResponse(400);
             }
         }
 

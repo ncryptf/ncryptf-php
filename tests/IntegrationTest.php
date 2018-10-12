@@ -5,6 +5,7 @@ namespace ncryptf\Tests;
 use Curl\Curl;
 use DateTime;
 use PHPUnit\Framework\TestCase;
+use ncryptf\Authorization;
 use ncryptf\Request;
 use ncryptf\Response;
 use ncryptf\Token;
@@ -163,5 +164,215 @@ final class IntegrationTest extends TestCase
         } catch (\Exception $e) {
             $this->assertTrue(false, $e->getMessage());
         }
+    }
+
+    /**
+     * This request securely authenticates a user with an encrypted request and returns an encrypted response
+     * This request is encrypted end-to-end
+     * @depends testEphemeralKeyBootstrap
+     * @return void
+     */
+    public function testAuthenticateWithEncryptedRequest(array $stack)
+    {
+        $curl = new Curl;
+
+        // Set the appropriate headers
+        $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
+        $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
+
+        // Tell the server what key we want to use
+        $curl->setHeader('X-HashId', $stack['hash-id']);
+        // Our public is is embedded in the signed request, so we don't need to explicitly tell
+        // the server what our public key is via this header. Implementors may wish to always include this for convenience
+        // If a public key is embedded in the body, it will supercede whatever is in the header.
+        // $curl->setHeader('x-pubkey', \base64_encode($this->key->getPublicKey()));
+        
+        $request = new Request(
+            $this->key->getSecretKey(),
+            // Because our request is unauthenticated, this signature doesn't mean anything, so we can just generate a random one.
+            Utils::generateSigningKeypair()->getSecretKey()
+        );
+        
+        // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
+        $payload = \json_encode(['email' => 'clara.oswald@example.com', 'password' => 'c0rect h0rs3 b@tt3y st@Pl3'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
+        $encryptedPayload = \base64_encode($request->encrypt(
+            $payload,
+            $stack['key']
+        ));
+
+        $curl->post("{$this->url}/authenticate", $encryptedPayload);
+
+        if ($curl->error) {
+            $this->assertTrue(false, $curl->errorCode . ': ' . $curl->errorMessage);
+            return;
+        }
+        
+        $response = new Response($this->key->getSecretKey());
+
+        try {
+            $message = \json_decode(
+                $response->decrypt(
+                    \base64_decode($curl->response)
+                ),
+                true
+            );
+
+            $this->assertNotEmpty($message);
+            $this->assertArrayHasKey('access_token', $message);
+            $this->assertArrayHasKey('refresh_token', $message);
+            $this->assertArrayHasKey('ikm', $message);
+            $this->assertArrayHasKey('signing', $message);
+            $this->assertArrayHasKey('expires_at', $message);
+
+            $token = new Token(
+                $message['access_token'],
+                $message['refresh_token'],
+                \base64_decode($message['ikm']),
+                \base64_decode($message['signing']),
+                $message['expires_at']
+            );
+
+            return [
+                'stack' => $stack,
+                'token' => $token
+            ];
+        } catch (\Exception $e) {
+            $this->assertTrue(false, $e->getMessage());
+        }
+    }
+    
+    /**
+     * De-authenticates a user via an encrypted and authenticated request
+     * @depends testAuthenticateWithEncryptedRequest
+     * @return void
+     */
+    public function testAuthenticatedEchoWithEncryptedRequest(array $stack)
+    {
+        $curl = new Curl;
+
+        // Set the appropriate headers
+        $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
+        $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
+
+        // Tell the server what key we want to use
+        $curl->setHeader('X-HashId', $stack['stack']['hash-id']);
+
+        // Our public is is embedded in the signed request, so we don't need to explicitly tell
+        // the server what our public key is via this header. Implementors may wish to always include this for convenience
+        // If a public key is embedded in the body, it will supercede whatever is in the header.
+        // $curl->setHeader('x-pubkey', \base64_encode($this->key->getPublicKey()));
+        
+        $request = new Request(
+            $this->key->getSecretKey(),
+            // Since our request is authenticated, we're going to sign it using the signing key the API issued us.
+            // If we do not use this signature key the server will reject the request
+            $stack['token']->signature
+        );
+        
+        // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
+        $payload = \json_encode(['hello' => 'world'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
+        $authorization = new Authorization(
+            'PUT',
+            '/echo',
+            $stack['token'],
+            new DateTime,
+            $payload
+        );
+
+        // Set our Authorization: HMAC header to identify the user making the request
+        $curl->setHeader('Authorization', $authorization->getHeader());
+
+        $encryptedPayload = \base64_encode($request->encrypt(
+            $payload,
+            $stack['stack']['key']
+        ));
+
+        $curl->put("{$this->url}/echo", $encryptedPayload);
+
+        if ($curl->error) {
+            $this->assertTrue(false, $curl->errorCode . ': ' . $curl->errorMessage);
+            return;
+        }
+        
+        $response = new Response($this->key->getSecretKey());
+
+        try {
+            $message = $response->decrypt(
+                \base64_decode($curl->response)
+            );
+
+            /**
+             * As an added integrity check, the API will sign the message with the same key it issued during authentication
+             * Therefore, we can verify that the signing public key associated to the message matches the public key from the
+             * token we were issued.
+             *
+             * If the keys match, then we have assurance that the message is authenticated
+             * If the keys don't match, then the request has been tampered with and should be discarded.
+             *
+             * This check should ALWAYS be performed for authenticated requests as it ensures the validity of the message
+             * and the origin of the message.
+             */
+            $this->assertTrue(
+                \sodium_compare(
+                    $stack['token']->getSignaturePublicKey(),
+                    Response::getSigningPublicKeyFromResponse(\base64_decode($curl->response))
+                ) === 0
+            );
+
+            // Decryption succeeded
+            $this->assertSame($payload, $message);
+        } catch (\Exception $e) {
+            $this->assertTrue(false, $e->getMessage());
+        }
+    }
+
+    /************************************************************************************************
+     *
+     * The requests that follow are for implementation sanity checks, and should not be referenced
+     * for other client implementations
+     *
+     ************************************************************************************************/
+
+    /**
+     * De-authenticates a user via an encrypted and authenticated request
+     * @depends testAuthenticateWithEncryptedRequest
+     * @return void
+     */
+    public function testAuthenticatedEchoWithBadSignature(array $stack)
+    {
+        $curl = new Curl;
+
+        $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
+        $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
+        $curl->setHeader('X-HashId', $stack['stack']['hash-id']);
+        
+        $request = new Request(
+            $this->key->getSecretKey(),
+            // Generating a random key instead of using the one issued to us will result in a signature failure
+            Utils::generateSigningKeypair()->getSecretKey()
+        );
+        
+        // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
+        $payload = \json_encode(['hello' => 'world'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
+        $authorization = new Authorization(
+            'PUT',
+            '/echo',
+            $stack['token'],
+            new DateTime,
+            $payload
+        );
+
+        // Set our Authorization: HMAC header to identify the user making the request
+        $curl->setHeader('Authorization', $authorization->getHeader());
+
+        $encryptedPayload = \base64_encode($request->encrypt(
+            $payload,
+            $stack['stack']['key']
+        ));
+
+        $curl->put("{$this->url}/echo", $encryptedPayload);
+
+        // Expect a 401 because the signature verification failed
+        $this->assertSame(401, $curl->errorCode);
     }
 }

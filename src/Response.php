@@ -63,10 +63,10 @@ class Response
                 throw new InvalidChecksumException("Calculated checksum differs from the checksum associated with the message.");
             }
 
-            $publicKey = \substr($response, 28, 32);
+            $publicKey = self::getPublicKeyFromResponse($response);
             $signature = \substr($payload, -64);
             $payload = \substr($payload, 0, -64);
-            $sigPubKey = \substr($payload, -32);
+            $sigPubKey = self::getSigningPublicKeyFromResponse($response);
             $payload = \substr($payload, 0, -32);
             $body = \substr($payload, 60, \strlen($payload));
 
@@ -203,7 +203,7 @@ class Response
             }
             
             $payload = \substr($response, 0, \strlen($response) - 64);
-            return \substr($payload, -32);
+            return \substr($payload, -96, 32);
         }
 
         throw new InvalidArgumentException('The response provided is not suitable for public key extraction.');

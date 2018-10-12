@@ -371,7 +371,7 @@ $PSR16CacheInterface = new class implements \Psr\SimpleCache\CacheInterface {};
 $response = Dispatcher::run([
     new RequestParser($PSR16CacheInterface),
     new Authentication,
-    new ResponseFormatter($PSR16CacheInterface, $EncryptionKeyInterface)
+    new ResponseFormatter($PSR16CacheInterface, $EncryptionKeyInterface::class)
     function ($request, $next) {
         return new JsonResponse(['hello' => 'world'])
     }
