@@ -49,6 +49,12 @@ final class IntegrationTest extends TestCase
     private $key;
 
     /**
+     * An access token to identify this client.
+     * @var string $token
+     */
+    private $token;
+
+    /**
      * Setup our test suite by checking the `NCRYPTF_TEST_API` environment variable, and creating a Keypair
      * @return void
      */
@@ -58,6 +64,10 @@ final class IntegrationTest extends TestCase
             $this->markTestSkipped('NCRYPTF_TEST_API environment variable not set. Unable to proceed.');
             $this->assertTrue(false);
             return;
+        }
+
+        if (($token = getenv('ACCESS_TOKEN')) !== false) {
+            $this->token = $token;
         }
 
         $this->key = Utils::generateKeypair();
@@ -76,6 +86,9 @@ final class IntegrationTest extends TestCase
         // Set the appropriate headers
         $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
         $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
+        if ($this->token !== null) {
+            $curl->setHeader('X-Access-Token', $this->token);
+        }
 
         // Tell the server what our PublicKey is
         $curl->setHeader('x-pubkey', \base64_encode($this->key->getPublicKey()));
@@ -124,6 +137,9 @@ final class IntegrationTest extends TestCase
         // Set the appropriate headers
         $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
         $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
+        if ($this->token !== null) {
+            $curl->setHeader('X-Access-Token', $this->token);
+        }
 
         // Tell the server what key we want to use
         $curl->setHeader('X-HashId', $stack['hash-id']);
@@ -131,13 +147,13 @@ final class IntegrationTest extends TestCase
         // the server what our public key is via this header. Implementors may wish to always include this for convenience
         // If a public key is embedded in the body, it will supercede whatever is in the header.
         // $curl->setHeader('x-pubkey', \base64_encode($this->key->getPublicKey()));
-        
+
         $request = new Request(
             $this->key->getSecretKey(),
             // Because our request is unauthenticated, this signature doesn't mean anything, so we can just generate a random one.
             Utils::generateSigningKeypair()->getSecretKey()
         );
-        
+
         // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
         $payload = \json_encode(['hello' => 'world'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
         $encryptedPayload = \base64_encode($request->encrypt(
@@ -151,7 +167,7 @@ final class IntegrationTest extends TestCase
             $this->assertTrue(false, $curl->errorCode . ': ' . $curl->errorMessage);
             return;
         }
-        
+
         $response = new Response($this->key->getSecretKey());
 
         try {
@@ -179,6 +195,9 @@ final class IntegrationTest extends TestCase
         // Set the appropriate headers
         $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
         $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
+        if ($this->token !== null) {
+            $curl->setHeader('X-Access-Token', $this->token);
+        }
 
         // Tell the server what key we want to use
         $curl->setHeader('X-HashId', $stack['hash-id']);
@@ -186,13 +205,13 @@ final class IntegrationTest extends TestCase
         // the server what our public key is via this header. Implementors may wish to always include this for convenience
         // If a public key is embedded in the body, it will supercede whatever is in the header.
         // $curl->setHeader('x-pubkey', \base64_encode($this->key->getPublicKey()));
-        
+
         $request = new Request(
             $this->key->getSecretKey(),
             // Because our request is unauthenticated, this signature doesn't mean anything, so we can just generate a random one.
             Utils::generateSigningKeypair()->getSecretKey()
         );
-        
+
         // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
         $payload = \json_encode(['email' => 'clara.oswald@example.com', 'password' => 'c0rect h0rs3 b@tt3y st@Pl3'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
         $encryptedPayload = \base64_encode($request->encrypt(
@@ -206,7 +225,7 @@ final class IntegrationTest extends TestCase
             $this->assertTrue(false, $curl->errorCode . ': ' . $curl->errorMessage);
             return;
         }
-        
+
         $response = new Response($this->key->getSecretKey());
 
         try {
@@ -240,7 +259,7 @@ final class IntegrationTest extends TestCase
             $this->assertTrue(false, $e->getMessage());
         }
     }
-    
+
     /**
      * De-authenticates a user via an encrypted and authenticated request
      * @depends testAuthenticateWithEncryptedRequest
@@ -253,6 +272,9 @@ final class IntegrationTest extends TestCase
         // Set the appropriate headers
         $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
         $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
+        if ($this->token !== null) {
+            $curl->setHeader('X-Access-Token', $this->token);
+        }
 
         // Tell the server what key we want to use
         $curl->setHeader('X-HashId', $stack['stack']['hash-id']);
@@ -261,14 +283,14 @@ final class IntegrationTest extends TestCase
         // the server what our public key is via this header. Implementors may wish to always include this for convenience
         // If a public key is embedded in the body, it will supercede whatever is in the header.
         // $curl->setHeader('x-pubkey', \base64_encode($this->key->getPublicKey()));
-        
+
         $request = new Request(
             $this->key->getSecretKey(),
             // Since our request is authenticated, we're going to sign it using the signing key the API issued us.
             // If we do not use this signature key the server will reject the request
             $stack['token']->signature
         );
-        
+
         // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
         $payload = \json_encode(['hello' => 'world'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
         $authorization = new Authorization(
@@ -293,7 +315,7 @@ final class IntegrationTest extends TestCase
             $this->assertTrue(false, $curl->errorCode . ': ' . $curl->errorMessage);
             return;
         }
-        
+
         $response = new Response($this->key->getSecretKey());
 
         try {
@@ -345,13 +367,16 @@ final class IntegrationTest extends TestCase
         $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
         $curl->setHeader('Accept', 'application/vnd.ncryptf+json');
         $curl->setHeader('X-HashId', $stack['stack']['hash-id']);
-        
+        if ($this->token !== null) {
+            $curl->setHeader('X-Access-Token', $this->token);
+        }
+
         $request = new Request(
             $this->key->getSecretKey(),
             // Generating a random key instead of using the one issued to us will result in a signature failure
             Utils::generateSigningKeypair()->getSecretKey()
         );
-        
+
         // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
         $payload = \json_encode(['hello' => 'world'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
         $authorization = new Authorization(
@@ -387,12 +412,15 @@ final class IntegrationTest extends TestCase
         $curl->setHeader('Content-Type', 'application/vnd.ncryptf+json');
         $curl->setHeader('Accept', 'application/json');
         $curl->setHeader('X-HashId', $stack['hash-id']);
-        
+        if ($this->token !== null) {
+            $curl->setHeader('X-Access-Token', $this->token);
+        }
+
         $request = new Request(
             $this->key->getSecretKey(),
             Utils::generateSigningKeypair()->getSecretKey()
         );
-        
+
         // Encrypt our JSON payload using the public key provided by the server from our ephemeral key request
         $payload = \json_encode(['hello' => 'world'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
         $encryptedPayload = $request->encrypt(
