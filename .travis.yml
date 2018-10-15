@@ -23,7 +23,7 @@ before_install:
   # Install dependencies
   - chmod a+x tests/.travis/install_dependencies.sh
   - bash tests/.travis/install_dependencies.sh
-  - if $(which php) -m | grep sodium; echo $?; then echo "Sodium is alraedy installed"; else pecl install libsodium-2.0.12; fi
+  - if $(which php) -m | grep sodium; echo $?; then else pecl install libsodium-2.0.12; else "Sodium is already installed"; fi
   - phpenv config-rm xdebug.ini || true
   - php -m
 
