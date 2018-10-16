@@ -75,7 +75,7 @@ final class Token
      */
     public function getSignaturePublicKey()
     {
-        return sodium_crypto_sign_publickey_from_secretkey($this->signature);
+        return \sodium_crypto_sign_publickey_from_secretkey($this->signature);
     }
 
     /**
