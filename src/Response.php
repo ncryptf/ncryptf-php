@@ -201,7 +201,7 @@ class Response
             if (\strlen($response) < 236) {
                 throw new InvalidArgumentException;
             }
-            
+
             return \substr($response, -160, 32);
         }
 
