@@ -261,7 +261,7 @@ final class IntegrationTest extends TestCase
     }
 
     /**
-     * De-authenticates a user via an encrypted and authenticated request
+     * Authenticated echo with an encrypted requests
      * @depends testAuthenticateWithEncryptedRequest
      * @return void
      */
@@ -356,7 +356,7 @@ final class IntegrationTest extends TestCase
      ************************************************************************************************/
 
     /**
-     * De-authenticates a user via an encrypted and authenticated request
+     * Verifies that a tampered request results in an error.
      * @depends testAuthenticateWithEncryptedRequest
      * @return void
      */
