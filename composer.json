@@ -21,7 +21,7 @@
         }
     },
     "require": {
-        "php": "^7.1 || ^7.2",
+        "php": "^7.1 || ^7.2 || ^7.3",
         "ext-sodium": ">=2.0.2",
         "psr/http-server-middleware": "^1.0",
         "middlewares/utils": "^2.1",
